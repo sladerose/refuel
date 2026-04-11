@@ -111,3 +111,61 @@ final class RefuelEvent {
         self.station = station
     }
 }
+
+@Model
+final class UserProfile {
+    @Attribute(.unique) var id: UUID
+    var xp: Int
+    var streakCount: Int
+    var lastContributionDate: Date?
+    var communityImpact: Double // Rand saved for others
+    
+    enum Rank: String, CaseIterable, Codable {
+        case newcomer = "Newcomer"
+        case activeMember = "Active Member"
+        case reliableContributor = "Reliable Contributor"
+        case expertScout = "Expert Scout"
+        case fuelLegend = "Fuel Legend"
+        
+        var nextRankThreshold: Int? {
+            switch self {
+            case .newcomer: return 500
+            case .activeMember: return 1000
+            case .reliableContributor: return 2500
+            case .expertScout: return 5000
+            case .fuelLegend: return nil
+            }
+        }
+    }
+    
+    var rank: Rank {
+        if xp < 500 { return .newcomer }
+        if xp < 1000 { return .activeMember }
+        if xp < 2500 { return .reliableContributor }
+        if xp < 5000 { return .expertScout }
+        return .fuelLegend
+    }
+    
+    init(id: UUID = UUID(), xp: Int = 0, streakCount: Int = 0, lastContributionDate: Date? = nil, communityImpact: Double = 0.0) {
+        self.id = id
+        self.xp = xp
+        self.streakCount = streakCount
+        self.lastContributionDate = lastContributionDate
+        self.communityImpact = communityImpact
+    }
+}
+
+@Model
+final class LotteryEntry {
+    @Attribute(.unique) var id: UUID
+    var date: Date
+    var stationName: String
+    var contributionType: String // "scan" or "verify"
+    
+    init(id: UUID = UUID(), date: Date = Date(), stationName: String, contributionType: String) {
+        self.id = id
+        self.date = date
+        self.stationName = stationName
+        self.contributionType = contributionType
+    }
+}

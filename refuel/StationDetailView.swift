@@ -3,7 +3,17 @@ import SwiftData
 import CoreLocation
 
 struct StationDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(GamificationManager.self) private var gamificationManager
+    @Query private var stations: [Station]
     let station: Station
+    
+    @State private var showingScanner = false
+    @State private var showingBoardScanner = false
+    @State private var showingAddLog = false
+    @State private var showingVerification = false
+    @State private var scannedData: ScannedReceiptData?
+    @State private var detectedBoardPrices: [String: Double] = [:]
     
     var body: some View {
         ScrollView {
@@ -107,6 +117,28 @@ struct StationDetailView: View {
                 // Navigation Buttons
                 VStack(spacing: 12) {
                     Button(action: {
+                        showingScanner = true
+                    }) {
+                        Label("Scan Receipt", systemImage: "camera.viewfinder")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    
+                    Button(action: {
+                        showingBoardScanner = true
+                    }) {
+                        Label("Scan Price Board", systemImage: "fuelpump.circle")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    
+                    Button(action: {
                         NavigationService.shared.open(
                             app: .appleMaps,
                             coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
@@ -141,6 +173,34 @@ struct StationDetailView: View {
             .padding(.vertical)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingScanner) {
+            ReceiptScannerView { result in
+                switch result {
+                case .success(let images):
+                    OCRService.shared.process(images: images, stations: stations) { data in
+                        var finalData = data
+                        finalData.stationName = station.name // Pre-fill current station
+                        self.scannedData = finalData
+                        self.showingAddLog = true
+                    }
+                case .failure(let error):
+                    print("Scanner failed: \(error)")
+                }
+            }
+        }
+        .sheet(isPresented: $showingAddLog) {
+            AddRefuelLogView(stations: stations, initialData: scannedData)
+        }
+        .sheet(isPresented: $showingBoardScanner) {
+            PriceBoardScannerContainer { results in
+                self.detectedBoardPrices = results
+                self.showingVerification = true
+                gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan") // Award for capturing board
+            }
+        }
+        .sheet(isPresented: $showingVerification) {
+            PriceVerificationView(station: station, detectedPrices: detectedBoardPrices)
+        }
     }
     
     private func priceComparisonText(zScore: Double) -> String {

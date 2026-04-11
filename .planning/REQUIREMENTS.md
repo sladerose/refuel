@@ -26,6 +26,17 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **TRACK-01**: User can log individual refuel events to track costs over time.
 - [x] **TRACK-02**: User can save favorite fuel stations for quick access.
 
+### Vision (VISION)
+
+- [x] **VISION-01**: User can scan a fuel receipt to automatically populate a refuel event.
+- [x] **VISION-02**: User can capture a station's price board to update global prices.
+
+### Engagement (ENGAGE)
+
+- [ ] **ENGAGE-01**: User can track personal contribution stats (XP, Ranks, Streaks).
+- [ ] **ENGAGE-02**: User is incentivized to contribute every 10 days via a "Fuel Streak" system.
+- [ ] **ENGAGE-03**: User can view "Community Impact" metrics (savings for others).
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -60,12 +71,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFO-04 | Phase 1 | Complete |
 | TRACK-01 | Phase 4 | Complete |
 | TRACK-02 | Phase 4 | Complete |
+| VISION-01 | Phase 6 | Complete |
+| VISION-02 | Phase 6 | Complete |
+| ENGAGE-01 | Phase 7 | Planned |
+| ENGAGE-02 | Phase 7 | Planned |
+| ENGAGE-03 | Phase 7 | Planned |
 
 **Coverage:**
-- v1 requirements: 10 total
-- Mapped to phases: 10
+- v1 requirements: 15 total
+- Mapped to phases: 15
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-11*
-*Last updated: 2026-04-12 after final verification*
+*Last updated: 2026-04-12 after Phase 7 planning*

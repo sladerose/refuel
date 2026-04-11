@@ -125,7 +125,14 @@ struct MapView: View {
                 .padding()
                 .background(.ultraThinMaterial)
                 .cornerRadius(12)
-                .padding()
+                .padding(.horizontal)
+                .padding(.top)
+                
+                HStack {
+                    Spacer()
+                    StreakIndicator()
+                        .padding(.trailing)
+                }
                 
                 if !searchService.searchResults.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {

@@ -5,12 +5,18 @@ import CoreLocation
 struct StationListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(LocationManager.self) var locationManager
+    @Environment(GamificationManager.self) private var gamificationManager
     
     @Query var stations: [Station]
     
     let filterFavorites: Bool
     let onRefresh: (() async -> Void)?
     @State private var sortOption: SortOption = .distance
+    
+    @State private var showingBoardScanner = false
+    @State private var showingVerification = false
+    @State private var selectedStationForScan: Station?
+    @State private var detectedBoardPrices: [String: Double] = [:]
     
     init(filterFavorites: Bool = false, onRefresh: (() async -> Void)? = nil) {
         self.filterFavorites = filterFavorites
@@ -55,12 +61,16 @@ struct StationListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Sort By", selection: $sortOption) {
-                    ForEach(SortOption.allCases) { option in
-                        Text(option.rawValue).tag(option)
+                HStack {
+                    Picker("Sort By", selection: $sortOption) {
+                        ForEach(SortOption.allCases) { option in
+                            Text(option.rawValue).tag(option)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    
+                    StreakIndicator()
                 }
-                .pickerStyle(.segmented)
                 .padding()
                 .background(.ultraThinMaterial)
                 
@@ -70,12 +80,35 @@ struct StationListView: View {
                     } label: {
                         StationRow(station: station, localAverage: averageMinPrice)
                     }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            selectedStationForScan = station
+                            showingBoardScanner = true
+                        } label: {
+                            Label("Scan", systemImage: "camera.viewfinder")
+                        }
+                        .tint(.orange)
+                    }
                 }
                 .refreshable {
                     await onRefresh?()
                 }
             }
             .navigationTitle(filterFavorites ? "Favorite Stations" : "Nearby Stations")
+            .sheet(isPresented: $showingBoardScanner) {
+                PriceBoardScannerContainer { results in
+                    self.detectedBoardPrices = results
+                    self.showingVerification = true
+                    if let station = selectedStationForScan {
+                        gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan") // Award for capturing board
+                    }
+                }
+            }
+            .sheet(isPresented: $showingVerification) {
+                if let station = selectedStationForScan {
+                    PriceVerificationView(station: station, detectedPrices: detectedBoardPrices)
+                }
+            }
             .overlay {
                 if stations.isEmpty {
                     ContentUnavailableView("No Stations Found", systemImage: "fuelpump.slash", description: Text("Try searching in a different area."))

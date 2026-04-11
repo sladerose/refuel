@@ -15,6 +15,8 @@ struct refuelApp: App {
             Station.self,
             FuelPrice.self,
             RefuelEvent.self,
+            UserProfile.self,
+            LotteryEntry.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -27,7 +29,7 @@ struct refuelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(modelContainer: sharedModelContainer)
         }
         .modelContainer(sharedModelContainer)
     }

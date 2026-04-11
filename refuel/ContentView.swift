@@ -14,42 +14,95 @@ struct ContentView: View {
     @State private var locationManager = LocationManager()
     @State private var searchService = SearchService()
     @State private var geofenceService = GeofenceService()
+    @State private var gamificationManager: GamificationManager
+    @State private var notificationManager = NotificationManager()
+    @State private var proactiveService: ProactiveService
     
     @Query private var stations: [Station]
     @State private var selectedTab = 0
     @State private var isRefreshing = false
+    @State private var selectedStationID: UUID?
+    
+    init(modelContainer: ModelContainer) {
+        let gManager = GamificationManager(modelContainer: modelContainer)
+        _gamificationManager = State(initialValue: gManager)
+        
+        let gService = GeofenceService()
+        _geofenceService = State(initialValue: gService)
+        
+        let nManager = NotificationManager()
+        _notificationManager = State(initialValue: nManager)
+        
+        _proactiveService = State(initialValue: ProactiveService(geofenceService: gService, notificationManager: nManager, modelContainer: modelContainer))
+    }
 
     var body: some View {
         Group {
             if locationManager.isAuthorized {
-                TabView(selection: $selectedTab) {
-                    MapView()
-                        .environment(locationManager)
-                        .environment(searchService)
-                        .tabItem {
-                            Label("Map", systemImage: "map")
-                        }
-                        .tag(0)
+                VStack(spacing: 0) {
+                    if proactiveService.isHikeImminent {
+                        HikeAlertBanner(proactiveService: proactiveService)
+                    }
                     
-                    StationListView(filterFavorites: false, onRefresh: refreshPrices)
-                        .environment(locationManager)
-                        .tabItem {
-                            Label("List", systemImage: "list.bullet")
+                    TabView(selection: $selectedTab) {
+                        MapView()
+                            .environment(locationManager)
+                            .environment(searchService)
+                            .tabItem {
+                                Label("Map", systemImage: "map")
+                            }
+                            .tag(0)
+                        
+                        StationListView(filterFavorites: false, onRefresh: refreshPrices)
+                            .environment(locationManager)
+                            .tabItem {
+                                Label("List", systemImage: "list.bullet")
+                            }
+                            .tag(1)
+                        
+                        StationListView(filterFavorites: true, onRefresh: refreshPrices)
+                            .environment(locationManager)
+                            .tabItem {
+                                Label("Favorites", systemImage: "heart.fill")
+                            }
+                            .tag(2)
+                        
+                        RefuelHistoryView(onRefresh: refreshPrices)
+                            .tabItem {
+                                Label("History", systemImage: "clock.fill")
+                            }
+                            .tag(3)
+                        
+                        ProfileView()
+                            .tabItem {
+                                Label("Profile", systemImage: "person.circle.fill")
+                            }
+                            .tag(4)
+                    }
+                }
+                .environment(gamificationManager)
+                .environment(proactiveService)
+                .onAppear {
+                    notificationManager.requestPermissions()
+                }
+                .onChange(of: notificationManager.pendingStationID) { _, newValue in
+                    if let uuid = newValue {
+                        selectedStationID = uuid
+                        selectedTab = 0
+                        notificationManager.pendingStationID = nil
+                    }
+                }
+                .sheet(item: $selectedStationID) { uuid in
+                    if let station = stations.first(where: { $0.id == uuid }) {
+                        NavigationStack {
+                            StationDetailView(station: station)
+                                .toolbar {
+                                    ToolbarItem(placement: .topBarTrailing) {
+                                        Button("Done") { selectedStationID = nil }
+                                    }
+                                }
                         }
-                        .tag(1)
-                    
-                    StationListView(filterFavorites: true, onRefresh: refreshPrices)
-                        .environment(locationManager)
-                        .tabItem {
-                            Label("Favorites", systemImage: "heart.fill")
-                        }
-                        .tag(2)
-                    
-                    RefuelHistoryView(onRefresh: refreshPrices)
-                        .tabItem {
-                            Label("History", systemImage: "clock.fill")
-                        }
-                        .tag(3)
+                    }
                 }
                 .overlay {
                     if isRefreshing {
@@ -133,10 +186,50 @@ struct ContentView: View {
                 radius: 5000, // 5km
                 identifier: "current_search"
             )
+            
+            // Start monitoring nearby stations for dwell detection
+            for station in stations {
+                geofenceService.monitorStation(id: station.id, latitude: station.latitude, longitude: station.longitude)
+            }
         } catch {
             print("Failed to refresh prices: \(error)")
         }
     }
+}
+
+struct HikeAlertBanner: View {
+    let proactiveService: ProactiveService
+    
+    var body: some View {
+        HStack {
+            Image(systemName: "fuelpump.fill")
+                .foregroundColor(.white)
+            VStack(alignment: .leading) {
+                Text("Fuel Hike Imminent!")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                Text("Prices rise in \(timeRemaining)")
+                    .font(.caption)
+            }
+            .foregroundColor(.white)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .padding()
+        .background(Color.red)
+    }
+    
+    var timeRemaining: String {
+        let diff = proactiveService.nextFirstWednesday().timeIntervalSinceNow
+        let hours = Int(diff) / 3600
+        let minutes = (Int(diff) % 3600) / 60
+        return "\(hours)h \(minutes)m"
+    }
+}
+
+extension UUID: Identifiable {
+    public var id: String { self.uuidString }
 }
 
 // MARK: - History Views
@@ -153,6 +246,8 @@ struct RefuelHistoryView: View {
     }
     
     @State private var showingAddLog = false
+    @State private var showingScanner = false
+    @State private var scannedData: ScannedReceiptData?
     
     var totalSpend: Double {
         logs.reduce(0) { $0 + $1.totalCost }
@@ -221,15 +316,37 @@ struct RefuelHistoryView: View {
             .navigationTitle("Refuel History")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showingAddLog = true
-                    } label: {
-                        Image(systemName: "plus")
+                    HStack {
+                        Button {
+                            showingScanner = true
+                        } label: {
+                            Image(systemName: "camera")
+                        }
+                        
+                        Button {
+                            scannedData = nil
+                            showingAddLog = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingScanner) {
+                ReceiptScannerView { result in
+                    switch result {
+                    case .success(let images):
+                        OCRService.shared.process(images: images, stations: stations) { data in
+                            self.scannedData = data
+                            self.showingAddLog = true
+                        }
+                    case .failure(let error):
+                        print("Scanner failed: \(error)")
                     }
                 }
             }
             .sheet(isPresented: $showingAddLog) {
-                AddRefuelLogView(stations: stations)
+                AddRefuelLogView(stations: stations, initialData: scannedData)
             }
             .overlay {
                 if logs.isEmpty {
@@ -253,13 +370,28 @@ struct AddRefuelLogView: View {
     @Environment(\.dismiss) private var dismiss
     
     let stations: [Station]
+    let initialData: ScannedReceiptData?
     
-    @State private var date = Date()
-    @State private var amount = ""
-    @State private var price = ""
-    @State private var grade = "91"
+    @State private var date: Date
+    @State private var amount: String
+    @State private var price: String
+    @State private var grade: String
     @State private var selectedStation: Station?
-    @State private var customStationName = ""
+    @State private var customStationName: String
+    
+    init(stations: [Station], initialData: ScannedReceiptData? = nil) {
+        self.stations = stations
+        self.initialData = initialData
+        
+        _date = State(initialValue: initialData?.date ?? Date())
+        _amount = State(initialValue: initialData?.amountInLitres != nil ? String(format: "%.2f", initialData!.amountInLitres!) : "")
+        _price = State(initialValue: initialData?.pricePerLitre != nil ? String(format: "%.2f", initialData!.pricePerLitre!) : "")
+        _grade = State(initialValue: initialData?.grade ?? "91")
+        
+        let matchedStation = stations.first(where: { $0.name == initialData?.stationName })
+        _selectedStation = State(initialValue: matchedStation)
+        _customStationName = State(initialValue: (matchedStation == nil) ? (initialData?.stationName ?? "") : "")
+    }
     
     var body: some View {
         NavigationStack {
@@ -325,10 +457,39 @@ struct AddRefuelLogView: View {
             station: selectedStation
         )
         modelContext.insert(log)
+        
+        // Award XP
+        if initialData != nil {
+            // Scanned receipt
+            gamificationManager.awardXP(amount: 50, stationName: name, type: "scan")
+        } else {
+            // Manual entry
+            gamificationManager.awardXP(amount: 10, stationName: name, type: "manual")
+        }
+        
+        // Update the station's price if we have a linked station
+        // Only update if the refuel is recent (last 24 hours)
+        if let station = selectedStation, abs(date.timeIntervalSinceNow) < 86400 {
+            if let existingPrice = station.prices.first(where: { $0.grade == grade }) {
+                existingPrice.price = priceVal
+                existingPrice.timestamp = date
+            } else {
+                let newPrice = FuelPrice(grade: grade, price: priceVal, timestamp: date, station: station)
+                modelContext.insert(newPrice)
+            }
+            
+            // Re-run analytics since we updated a price
+            let fetchDescriptor = FetchDescriptor<Station>()
+            if let allStations = try? modelContext.fetch(fetchDescriptor) {
+                FuelPriceIngestor.calculateAnalytics(for: allStations)
+            }
+        }
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: [Station.self, FuelPrice.self], inMemory: true)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Schema([Station.self, FuelPrice.self, RefuelEvent.self, UserProfile.self]), configurations: [config])
+    return ContentView(modelContainer: container)
+        .modelContainer(container)
 }
