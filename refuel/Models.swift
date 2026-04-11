@@ -13,6 +13,7 @@ final class Station {
     var services: [String]?
     var lastUpdated: Date?
     var zScore: Double?
+    var isFavorite: Bool = false
     
     enum RAGStatus: String, Codable, CaseIterable {
         case exceptional
@@ -25,7 +26,7 @@ final class Station {
             switch self {
             case .exceptional: return Color(red: 0, green: 0.5, blue: 0) // Dark Green
             case .good: return .green
-            case .average: return .yellow
+            case .average: return Color(red: 1.0, green: 0.65, blue: 0.0) // Darker Amber for contrast
             case .expensive: return .orange
             case .avoid: return .red
             }
@@ -50,7 +51,10 @@ final class Station {
     @Relationship(deleteRule: .cascade, inverse: \FuelPrice.station)
     var prices: [FuelPrice] = []
     
-    init(id: UUID = UUID(), name: String, address: String, latitude: Double, longitude: Double, openingHours: String? = nil, services: [String]? = nil, lastUpdated: Date? = nil, zScore: Double? = nil) {
+    @Relationship(deleteRule: .cascade, inverse: \RefuelEvent.station)
+    var refuelLogs: [RefuelEvent] = []
+    
+    init(id: UUID = UUID(), name: String, address: String, latitude: Double, longitude: Double, openingHours: String? = nil, services: [String]? = nil, lastUpdated: Date? = nil, zScore: Double? = nil, isFavorite: Bool = false) {
         self.id = id
         self.name = name
         self.address = address
@@ -60,6 +64,7 @@ final class Station {
         self.services = services
         self.lastUpdated = lastUpdated
         self.zScore = zScore
+        self.isFavorite = isFavorite
     }
 }
 
@@ -77,6 +82,32 @@ final class FuelPrice {
         self.grade = grade
         self.price = price
         self.timestamp = timestamp
+        self.station = station
+    }
+}
+
+@Model
+final class RefuelEvent {
+    @Attribute(.unique) var id: UUID
+    var date: Date
+    var amountInLitres: Double
+    var pricePerLitre: Double
+    var grade: String
+    var stationName: String
+    
+    var station: Station?
+    
+    var totalCost: Double {
+        amountInLitres * pricePerLitre
+    }
+    
+    init(id: UUID = UUID(), date: Date = Date(), amountInLitres: Double, pricePerLitre: Double, grade: String, stationName: String, station: Station? = nil) {
+        self.id = id
+        self.date = date
+        self.amountInLitres = amountInLitres
+        self.pricePerLitre = pricePerLitre
+        self.grade = grade
+        self.stationName = stationName
         self.station = station
     }
 }

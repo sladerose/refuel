@@ -14,6 +14,7 @@ struct refuelApp: App {
         let schema = Schema([
             Station.self,
             FuelPrice.self,
+            RefuelEvent.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

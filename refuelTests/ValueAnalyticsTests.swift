@@ -6,12 +6,10 @@ import Foundation
 @MainActor
 struct ValueAnalyticsTests {
     var modelContainer: ModelContainer!
-    var analyticsService: ValueAnalyticsService!
 
     init() {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         modelContainer = try! ModelContainer(for: Station.self, configurations: config)
-        analyticsService = ValueAnalyticsService()
     }
 
     @Test func testZScoreCalculation() async throws {
@@ -33,7 +31,7 @@ struct ValueAnalyticsTests {
         context.insert(s2)
         context.insert(s3)
         
-        analyticsService.calculateAnalytics(for: [s1, s2, s3])
+        FuelPriceIngestor.calculateAnalytics(for: [s1, s2, s3])
         
         // Mean = (1+2+3)/3 = 2
         // Variance = ((1-2)^2 + (2-2)^2 + (3-2)^2) / 3 = (1 + 0 + 1) / 3 = 0.666...

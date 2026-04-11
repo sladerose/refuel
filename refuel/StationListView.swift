@@ -8,7 +8,18 @@ struct StationListView: View {
     
     @Query var stations: [Station]
     
+    let filterFavorites: Bool
+    let onRefresh: (() async -> Void)?
     @State private var sortOption: SortOption = .distance
+    
+    init(filterFavorites: Bool = false, onRefresh: (() async -> Void)? = nil) {
+        self.filterFavorites = filterFavorites
+        self.onRefresh = onRefresh
+        
+        if filterFavorites {
+            _stations = Query(filter: #Predicate<Station> { $0.isFavorite }, sort: \Station.name)
+        }
+    }
     
     enum SortOption: String, CaseIterable, Identifiable {
         case distance = "Distance"
@@ -35,22 +46,36 @@ struct StationListView: View {
         }
     }
     
+    var averageMinPrice: Double? {
+        let minPrices = stations.compactMap { $0.prices.map(\.price).min() }
+        guard !minPrices.isEmpty else { return nil }
+        return minPrices.reduce(0, +) / Double(minPrices.count)
+    }
+    
     var body: some View {
         NavigationStack {
-            List(sortedStations) { station in
-                StationRow(station: station)
-            }
-            .navigationTitle("Nearby Stations")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Picker("Sort By", selection: $sortOption) {
-                        ForEach(SortOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
-                        }
+            VStack(spacing: 0) {
+                Picker("Sort By", selection: $sortOption) {
+                    ForEach(SortOption.allCases) { option in
+                        Text(option.rawValue).tag(option)
                     }
-                    .pickerStyle(.menu)
+                }
+                .pickerStyle(.segmented)
+                .padding()
+                .background(.ultraThinMaterial)
+                
+                List(sortedStations) { station in
+                    NavigationLink {
+                        StationDetailView(station: station)
+                    } label: {
+                        StationRow(station: station, localAverage: averageMinPrice)
+                    }
+                }
+                .refreshable {
+                    await onRefresh?()
                 }
             }
+            .navigationTitle(filterFavorites ? "Favorite Stations" : "Nearby Stations")
             .overlay {
                 if stations.isEmpty {
                     ContentUnavailableView("No Stations Found", systemImage: "fuelpump.slash", description: Text("Try searching in a different area."))
@@ -62,6 +87,7 @@ struct StationListView: View {
 
 struct StationRow: View {
     let station: Station
+    let localAverage: Double?
     @Environment(LocationManager.self) var locationManager
     
     var distanceString: String {
@@ -71,12 +97,45 @@ struct StationRow: View {
         return String(format: "%.1f km", distance / 1000)
     }
     
+    var valueSummary: String? {
+        guard let localAverage = localAverage,
+              let minPrice = station.prices.map(\.price).min() else { return nil }
+        
+        let diff = minPrice - localAverage
+        if abs(diff) < 0.005 {
+            return "Average price"
+        } else if diff < 0 {
+            return String(format: "$%.2f cheaper than avg", abs(diff))
+        } else {
+            return String(format: "$%.2f more than avg", diff)
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                Button {
+                    station.isFavorite.toggle()
+                } label: {
+                    Image(systemName: station.isFavorite ? "heart.fill" : "heart")
+                        .foregroundColor(station.isFavorite ? .red : .gray)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(station.isFavorite ? "Remove from Favorites" : "Add to Favorites")
+                .accessibilityValue(station.isFavorite ? "Favorited" : "Not Favorited")
+                
                 Text(station.name)
                     .font(.headline)
                 Spacer()
+                if let summary = valueSummary {
+                    Text(summary)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(station.ragStatus.color.opacity(0.2))
+                        .foregroundColor(station.ragStatus.color)
+                        .clipShape(Capsule())
+                }
                 Text(distanceString)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -96,7 +155,7 @@ struct StationRow: View {
                             .font(.caption)
                     }
                     .padding(6)
-                    .background(Color.blue.opacity(0.1))
+                    .background(station.ragStatus.color.opacity(0.1))
                     .cornerRadius(4)
                 }
             }
@@ -109,7 +168,7 @@ struct StationRow: View {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Station.self, configurations: config)
     
-    return StationListView()
+    return StationListView(filterFavorites: false, onRefresh: nil)
         .modelContainer(container)
         .environment(LocationManager())
 }

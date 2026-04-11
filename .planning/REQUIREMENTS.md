@@ -9,22 +9,22 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Discovery (DISCO)
 
-- [ ] **DISCO-01**: User can view nearby fuel stations on an interactive map.
-- [ ] **DISCO-02**: User can view a sortable list of fuel stations (price/distance).
-- [ ] **DISCO-03**: Map/List automatically refreshes as the user moves (Dynamic Geofencing).
-- [ ] **DISCO-04**: User can search for fuel stations by specific location or address.
+- [x] **DISCO-01**: User can view nearby fuel stations on an interactive map.
+- [x] **DISCO-02**: User can view a sortable list of fuel stations (price/distance).
+- [x] **DISCO-03**: Map/List automatically refreshes as the user moves (Dynamic Geofencing).
+- [x] **DISCO-04**: User can search for fuel stations by specific location or address.
 
 ### Station Information (INFO)
 
-- [ ] **INFO-01**: User can view current prices for multiple fuel grades at a station.
-- [ ] **INFO-02**: User can instantly see a station's price value via RAG (Red-Amber-Green) indicators.
-- [ ] **INFO-03**: User can view station details including opening times and available services.
-- [ ] **INFO-04**: User can open a station's location in Apple Maps or Google Maps for navigation.
+- [x] **INFO-01**: User can view current prices for multiple fuel grades at a station.
+- [x] **INFO-02**: User can instantly see a station's price value via RAG (Red-Amber-Green) indicators.
+- [x] **INFO-03**: User can view station details including opening times and available services.
+- [x] **INFO-04**: User can open a station's location in Apple Maps or Google Maps for navigation.
 
 ### Personalization & Tracking (TRACK)
 
-- [ ] **TRACK-01**: User can log individual refuel events to track costs over time.
-- [ ] **TRACK-02**: User can save favorite fuel stations for quick access.
+- [x] **TRACK-01**: User can log individual refuel events to track costs over time.
+- [x] **TRACK-02**: User can save favorite fuel stations for quick access.
 
 ## v2 Requirements
 
@@ -50,16 +50,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISCO-01 | Phase 1 | Pending |
-| DISCO-02 | Phase 2 | Pending |
-| DISCO-03 | Phase 3 | Pending |
-| DISCO-04 | Phase 1 | Pending |
-| INFO-01 | Phase 2 | Pending |
-| INFO-02 | Phase 3 | Pending |
-| INFO-03 | Phase 2 | Pending |
-| INFO-04 | Phase 1 | Pending |
-| TRACK-01 | Phase 4 | Pending |
-| TRACK-02 | Phase 4 | Pending |
+| DISCO-01 | Phase 1 | Complete |
+| DISCO-02 | Phase 2 | Complete |
+| DISCO-03 | Phase 3 | Complete |
+| DISCO-04 | Phase 1 | Complete |
+| INFO-01 | Phase 2 | Complete |
+| INFO-02 | Phase 3 | Complete |
+| INFO-03 | Phase 2 | Complete |
+| INFO-04 | Phase 1 | Complete |
+| TRACK-01 | Phase 4 | Complete |
+| TRACK-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 10 total
@@ -68,4 +68,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-11*
-*Last updated: 2026-04-11 after initial definition*
+*Last updated: 2026-04-12 after final verification*
