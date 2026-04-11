@@ -51,7 +51,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DISCO-01 | Phase 1 | Pending |
-| DISCO-02 | Phase 1 | Pending |
+| DISCO-02 | Phase 2 | Pending |
 | DISCO-03 | Phase 3 | Pending |
 | DISCO-04 | Phase 1 | Pending |
 | INFO-01 | Phase 2 | Pending |
