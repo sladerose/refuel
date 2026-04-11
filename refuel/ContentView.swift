@@ -9,47 +9,35 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var locationManager = LocationManager()
+    @State private var searchService = SearchService()
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        Group {
+            if locationManager.isAuthorized {
+                MapView()
+                    .environment(locationManager)
+                    .environment(searchService)
+            } else {
+                VStack(spacing: 20) {
+                    Image(systemName: "location.circle.fill")
+                        .resizable()
+                        .frame(width: 80, height: 80)
+                        .foregroundColor(.blue)
+                    
+                    Text("Location Access Required")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("We need your location to show nearby fuel stations and provide the best prices.")
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button("Grant Permission") {
+                        locationManager.requestPermission()
                     }
+                    .buttonStyle(.borderedProminent)
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
             }
         }
     }
@@ -57,5 +45,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Station.self, FuelPrice.self], inMemory: true)
 }
