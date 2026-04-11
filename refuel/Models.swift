@@ -12,6 +12,12 @@ final class Station {
     var services: [String]?
     var lastUpdated: Date?
     
+    var isStale: Bool {
+        guard let lastUpdated = lastUpdated else { return true }
+        let fourHours: TimeInterval = 4 * 60 * 60
+        return Date().timeIntervalSince(lastUpdated) > fourHours
+    }
+    
     @Relationship(deleteRule: .cascade, inverse: \FuelPrice.station)
     var prices: [FuelPrice] = []
     
