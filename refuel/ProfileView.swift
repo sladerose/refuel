@@ -7,67 +7,85 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    if let profile = gamificationManager.userProfile {
-                        // Rank Header
-                        VStack(spacing: 12) {
+            List {
+                if let profile = gamificationManager.userProfile {
+                    Section {
+                        HStack(spacing: 16) {
                             ZStack {
                                 Circle()
                                     .fill(LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                    .frame(width: 100, height: 100)
+                                    .frame(width: 70, height: 70)
                                 
                                 Image(systemName: rankIcon(for: profile.rank))
-                                    .font(.system(size: 50))
+                                    .font(.title2)
                                     .foregroundColor(.white)
                             }
                             
-                            Text(profile.rank.rawValue)
-                                .font(.title2)
-                                .fontWeight(.bold)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(profile.rank.rawValue)
+                                    .font(.headline)
+                                
+                                Text("\(profile.xp) XP • Level \(profile.rank.level)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        
+                        VStack(spacing: 8) {
+                            let nextThreshold = profile.rank.nextRankThreshold ?? profile.xp
+                            let progress = Double(profile.xp) / Double(nextThreshold)
                             
-                            VStack(spacing: 6) {
-                                let nextThreshold = profile.rank.nextRankThreshold ?? profile.xp
-                                let progress = Double(profile.xp) / Double(nextThreshold)
-                                
-                                ProgressView(value: progress)
-                                    .tint(.orange)
-                                
-                                HStack {
-                                    Text("\(profile.xp) XP")
+                            ProgressView(value: progress)
+                                .tint(.orange)
+                            
+                            HStack {
+                                if let next = profile.rank.nextRankThreshold {
+                                    Text("\(next - profile.xp) XP to next level")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                    Spacer()
-                                    if let next = profile.rank.nextRankThreshold {
-                                        Text("Next level at \(next) XP")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    } else {
-                                        Text("Max Level Reached")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
+                                } else {
+                                    Text("Maximum Rank Achieved")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
+                                Spacer()
+                                Text("\(Int(progress * 100))%")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
-                            .padding(.horizontal, 40)
                         }
-                        .padding(.vertical)
-                        
-                        // Stats Grid
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            StatCard(title: "Streak", value: "\(profile.streakCount) Days", icon: "flame.fill", color: .orange)
-                            StatCard(title: "Lottery Entries", value: "\(gamificationManager.monthlyLotteryEntries)", icon: "ticket.fill", color: .purple)
+                        .padding(.vertical, 4)
+                    }
+                    
+                    Section("Your Stats") {
+                        LabeledContent {
+                            Text("\(profile.streakCount) Days")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.orange)
+                        } label: {
+                            Label("Current Streak", systemImage: "flame.fill")
                         }
-                        .padding(.horizontal)
                         
-                        // Community Dashboard
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Fuel Scout Network")
-                                .font(.headline)
+                        LabeledContent {
+                            Text("\(gamificationManager.monthlyLuckyDrawEntries)")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.purple)
+                        } label: {
+                            Label("Lucky Draws", systemImage: "ticket.fill")
+                        }
+                    }
+                    
+                    Section {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("Community Impact", systemImage: "person.3.fill")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
                             
                             HStack {
                                 VStack(alignment: .leading) {
-                                    Text("Global Community Savings")
+                                    Text("Global Network Savings")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                     Text(String(format: "R%.0f", animatedGlobalImpact))
@@ -82,33 +100,38 @@ struct ProfileView: View {
                                     .foregroundColor(.green)
                             }
                             
-                            Text("Your personal impact: \(String(format: "R%.0f", profile.communityImpact)) saved for others.")
-                                .font(.subheadline)
+                            Text("You've helped others save R\(String(format: "%.0f", profile.communityImpact))")
+                                .font(.footnote)
                                 .foregroundColor(.secondary)
                         }
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-                        .padding(.horizontal)
-                        
-                        // Share Button
-                        Button(action: shareImpact) {
-                            Label("Share My Impact", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.orange)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
+                        .padding(.vertical, 8)
+                    } header: {
+                        Text("Scout Network")
+                    }
+                    
+                    Section {
+                        Button {
+                            shareImpact()
+                        } label: {
+                            Label("Share My Achievement", systemImage: "square.and.arrow.up")
+                                .fontWeight(.semibold)
                         }
-                        .padding(.horizontal)
-                        
-                    } else {
-                        ProgressView("Loading Profile...")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(.orange)
+                    }
+                    
+                } else {
+                    Section {
+                        HStack {
+                            Spacer()
+                            ProgressView("Loading Profile...")
+                            Spacer()
+                        }
                     }
                 }
-                .padding(.vertical)
             }
-            .navigationTitle("Your Profile")
+            .listStyle(.insetGrouped)
+            .navigationTitle("Profile")
             .onAppear {
                 withAnimation(.interpolatingSpring(stiffness: 10, damping: 5).delay(0.5)) {
                     animatedGlobalImpact = gamificationManager.globalImpactTotal
@@ -128,7 +151,7 @@ struct ProfileView: View {
         )
         
         let renderer = ImageRenderer(content: card)
-        renderer.scale = 3.0 // High quality
+        renderer.scale = 3.0
         
         if let uiImage = renderer.uiImage {
             let activityVC = UIActivityViewController(activityItems: [uiImage, "I'm saving money on fuel with Refuel! Join the Fuel Scouts."], applicationActivities: nil)
@@ -151,29 +174,15 @@ struct ProfileView: View {
     }
 }
 
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.headline)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+extension UserProfile.Rank {
+    var level: Int {
+        switch self {
+        case .newcomer: return 1
+        case .activeMember: return 2
+        case .reliableContributor: return 3
+        case .expertScout: return 4
+        case .fuelLegend: return 5
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
     }
 }
 

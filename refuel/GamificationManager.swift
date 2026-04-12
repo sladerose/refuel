@@ -38,25 +38,25 @@ final class GamificationManager {
         updateStreak()
         
         if let name = stationName {
-            createLotteryEntry(type: type, stationName: name)
+            createLuckyDrawEntry(type: type, stationName: name)
         }
         
         try? modelContext.save()
     }
     
     @MainActor
-    private func createLotteryEntry(type: String, stationName: String) {
-        let entry = LotteryEntry(stationName: stationName, contributionType: type)
+    private func createLuckyDrawEntry(type: String, stationName: String) {
+        let entry = LuckyDrawEntry(stationName: stationName, contributionType: type)
         modelContext.insert(entry)
     }
     
     @MainActor
-    var monthlyLotteryEntries: Int {
+    var monthlyLuckyDrawEntries: Int {
         let now = Date()
         let calendar = Calendar.current
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
         
-        let descriptor = FetchDescriptor<LotteryEntry>(
+        let descriptor = FetchDescriptor<LuckyDrawEntry>(
             predicate: #Predicate { $0.date >= startOfMonth }
         )
         
@@ -66,7 +66,7 @@ final class GamificationManager {
     @MainActor
     var globalImpactTotal: Double {
         // Mocked by locally aggregating and multiplying
-        let descriptor = FetchDescriptor<LotteryEntry>()
+        let descriptor = FetchDescriptor<LuckyDrawEntry>()
         let count = (try? modelContext.fetchCount(descriptor)) ?? 0
         return 1420560.0 + Double(count * 15) // Baseline + new contributions
     }

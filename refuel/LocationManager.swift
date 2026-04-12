@@ -23,7 +23,7 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     }
     
     func requestPermission() {
-        manager.requestAlwaysAuthorization()
+        manager.requestWhenInUseAuthorization()
     }
     
     private func checkAuthorization() {

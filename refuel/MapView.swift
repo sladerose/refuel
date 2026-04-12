@@ -14,153 +14,175 @@ struct MapView: View {
     
     @State private var position: MapCameraPosition = .userLocation(fallback: .automatic)
     @State private var searchText = ""
-    @State private var isShowingSearch = false
     @State private var selectedStation: Station?
     
     var body: some View {
-        ZStack(alignment: .top) {
-            Map(position: $position) {
-                UserAnnotation()
-                
-                // Persisted stations from SwiftData
-                ForEach(stations) { station in
-                    Annotation(station.name, coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude)) {
-                        VStack(spacing: 4) {
-                            if let cheapestPrice = station.prices.min(by: { $0.price < $1.price }) {
-                                Button {
-                                    selectedStation = station
-                                } label: {
-                                    Text(String(format: "$%.2f", cheapestPrice.price))
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .padding(4)
-                                        .background(.ultraThinMaterial)
-                                        .cornerRadius(6)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(station.isStale ? Color.gray : station.ragStatus.color, lineWidth: 1)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Price: \(String(format: "$%.2f", cheapestPrice.price))")
-                            }
-                            
-                            Button {
-                                station.isFavorite.toggle()
-                            } label: {
-                                ZStack {
-                                    Image(systemName: "fuelpump.fill")
-                                        .symbolRenderingMode(.palette)
-                                        .foregroundStyle(.white, station.isStale ? .gray : station.ragStatus.color)
-                                        .padding(4)
-                                        .background(station.isStale ? .gray : station.ragStatus.color)
-                                        .clipShape(Circle())
-                                    
-                                    if station.isFavorite {
-                                        Image(systemName: "heart.fill")
-                                            .resizable()
-                                            .frame(width: 12, height: 12)
-                                            .foregroundColor(.red)
-                                            .offset(x: 10, y: -10)
-                                    }
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(station.isFavorite ? "Remove from Favorites" : "Add to Favorites")
-                            .accessibilityValue(station.isFavorite ? "Favorited" : "Not Favorited")
-                        }
-                        .accessibilityLabel("\(station.name), \(station.ragStatus.rawValue) value")
-                        .accessibilityAction(named: "Toggle Favorite") {
-                            station.isFavorite.toggle()
-                        }
-                        .accessibilityAction(named: "View Details") {
-                            selectedStation = station
-                        }
+        Map(position: $position) {
+            UserAnnotation()
+            
+            ForEach(stations) { station in
+                Annotation(station.name, coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude)) {
+                    MapMarker(station: station) {
+                        selectedStation = station
                     }
-                }
-                
-                // Future: Search results
-                ForEach(searchService.searchResults, id: \.self) { item in
-                    Marker(item.name ?? "Search Result", coordinate: item.location.coordinate)
-                }
-            }
-            .mapControls {
-                MapUserLocationButton()
-                MapCompass()
-                MapScaleView()
-            }
-            .sheet(item: $selectedStation) { station in
-                NavigationStack {
-                    StationDetailView(station: station)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button("Done") {
-                                    selectedStation = nil
-                                }
-                            }
-                        }
                 }
             }
             
-            // Search Bar Overlay
-            VStack {
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("Search location...", text: $searchText)
-                        .onSubmit {
-                            searchService.search(query: searchText, region: nil)
-                        }
-                    
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                            searchService.searchResults = []
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
+            ForEach(searchService.searchResults, id: \.self) { item in
+                Marker(item.name ?? "Search Result", coordinate: item.location.coordinate)
+            }
+        }
+        .mapControls {
+            MapUserLocationButton()
+            MapCompass()
+            MapScaleView()
+        }
+        .safeAreaInset(edge: .top) {
+            VStack(spacing: 8) {
+                // Native-style Floating Search
+                VStack(spacing: 0) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("Search for a place...", text: $searchText)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                searchService.search(query: searchText, region: nil)
+                            }
+                        
+                        if !searchText.isEmpty {
+                            Button {
+                                searchText = ""
+                                searchService.searchResults = []
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                    
+                    if !searchService.searchResults.isEmpty {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(searchService.searchResults, id: \.self) { item in
+                                    Button {
+                                        withAnimation {
+                                            let coordinate = item.location.coordinate
+                                            position = .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                                            searchService.searchResults = []
+                                            searchText = item.name ?? ""
+                                        }
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(item.name ?? "Unknown")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.primary)
+                                            if let address = item.name {
+                                                Text(address)
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding()
+                                    }
+                                    Divider()
+                                        .padding(.horizontal)
+                                }
+                            }
+                        }
+                        .frame(maxHeight: 250)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.top, 8)
+                    }
                 }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
                 .padding(.horizontal)
-                .padding(.top)
                 
                 HStack {
                     Spacer()
                     StreakIndicator()
                         .padding(.trailing)
                 }
-                
-                if !searchService.searchResults.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(searchService.searchResults, id: \.self) { item in
-                                Button(action: {
-                                    withAnimation {
-                                        let coordinate = item.location.coordinate
-                                        position = .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
-                                    }
-                                }) {
-                                    VStack(alignment: .leading) {
-                                        Text(item.name ?? "Unknown")
-                                            .font(.headline)
-                                        Text(item.name ?? "")
-                                            .font(.caption)
-                                    }
-                                    .padding()
-                                    .background(.thinMaterial)
-                                    .cornerRadius(8)
-                                }
+            }
+            .padding(.top, 8)
+            .background(
+                LinearGradient(
+                    colors: [.black.opacity(0.1), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .allowsHitTesting(false)
+            )
+        }
+        .sheet(item: $selectedStation) { station in
+            NavigationStack {
+                StationDetailView(station: station)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") {
+                                selectedStation = nil
                             }
+                            .fontWeight(.bold)
                         }
-                        .padding(.horizontal)
+                    }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+struct MapMarker: View {
+    let station: Station
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 0) {
+                if let cheapestPrice = station.prices.min(by: { $0.price < $1.price }) {
+                    Text(String(format: "R%.2f", cheapestPrice.price))
+                        .font(.system(size: 10, weight: .black))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(station.isStale ? Color.gray : station.ragStatus.color, lineWidth: 1)
+                        )
+                        .offset(y: -2)
+                }
+                
+                ZStack {
+                    Circle()
+                        .fill(station.isStale ? .gray : station.ragStatus.color)
+                        .frame(width: 28, height: 28)
+                        .shadow(radius: 2)
+                    
+                    Image(systemName: "fuelpump.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                    
+                    if station.isFavorite {
+                        Image(systemName: "heart.fill")
+                            .resizable()
+                            .frame(width: 10, height: 10)
+                            .foregroundColor(.red)
+                            .background(Circle().fill(.white).frame(width: 12, height: 12))
+                            .offset(x: 10, y: -10)
                     }
                 }
             }
         }
+        .buttonStyle(.plain)
     }
 }
 

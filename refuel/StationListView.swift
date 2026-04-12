@@ -31,6 +31,13 @@ struct StationListView: View {
         case distance = "Distance"
         case price = "Price"
         var id: String { self.rawValue }
+        
+        var systemImage: String {
+            switch self {
+            case .distance: return "location.fill"
+            case .price: return "dollarsign.circle.fill"
+            }
+        }
     }
     
     var sortedStations: [Station] {
@@ -60,47 +67,51 @@ struct StationListView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                HStack {
-                    Picker("Sort By", selection: $sortOption) {
-                        ForEach(SortOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    StreakIndicator()
+            List(sortedStations) { station in
+                NavigationLink {
+                    StationDetailView(station: station)
+                } label: {
+                    StationRow(station: station, localAverage: averageMinPrice)
                 }
-                .padding()
-                .background(.ultraThinMaterial)
-                
-                List(sortedStations) { station in
-                    NavigationLink {
-                        StationDetailView(station: station)
+                .swipeActions(edge: .trailing) {
+                    Button {
+                        selectedStationForScan = station
+                        showingBoardScanner = true
                     } label: {
-                        StationRow(station: station, localAverage: averageMinPrice)
+                        Label("Scan Board", systemImage: "camera.viewfinder")
                     }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            selectedStationForScan = station
-                            showingBoardScanner = true
-                        } label: {
-                            Label("Scan", systemImage: "camera.viewfinder")
-                        }
-                        .tint(.orange)
-                    }
-                }
-                .refreshable {
-                    await onRefresh?()
+                    .tint(.orange)
                 }
             }
-            .navigationTitle(filterFavorites ? "Favorite Stations" : "Nearby Stations")
+            .listStyle(.insetGrouped)
+            .refreshable {
+                await onRefresh?()
+            }
+            .navigationTitle(filterFavorites ? "Favorites" : "Nearby Stations")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    StreakIndicator()
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Sort By", selection: $sortOption) {
+                            ForEach(SortOption.allCases) { option in
+                                Label(option.rawValue, systemImage: option.systemImage)
+                                    .tag(option)
+                            }
+                        }
+                    } label: {
+                        Label("Sort", systemImage: "arrow.up.arrow.down")
+                    }
+                }
+            }
             .sheet(isPresented: $showingBoardScanner) {
                 PriceBoardScannerContainer { results in
                     self.detectedBoardPrices = results
                     self.showingVerification = true
                     if let station = selectedStationForScan {
-                        gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan") // Award for capturing board
+                        gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan")
                     }
                 }
             }
@@ -111,7 +122,11 @@ struct StationListView: View {
             }
             .overlay {
                 if stations.isEmpty {
-                    ContentUnavailableView("No Stations Found", systemImage: "fuelpump.slash", description: Text("Try searching in a different area."))
+                    ContentUnavailableView(
+                        filterFavorites ? "No Favorites" : "No Stations Found",
+                        systemImage: filterFavorites ? "heart.slash" : "fuelpump.slash",
+                        description: Text(filterFavorites ? "Stations you heart will appear here." : "Try searching in a different area.")
+                    )
                 }
             }
         }
@@ -136,60 +151,61 @@ struct StationRow: View {
         
         let diff = minPrice - localAverage
         if abs(diff) < 0.005 {
-            return "Average price"
+            return "Avg price"
         } else if diff < 0 {
-            return String(format: "$%.2f cheaper than avg", abs(diff))
+            return String(format: "-R%.2f vs avg", abs(diff))
         } else {
-            return String(format: "$%.2f more than avg", diff)
+            return String(format: "+R%.2f vs avg", diff)
         }
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button {
-                    station.isFavorite.toggle()
-                } label: {
-                    Image(systemName: station.isFavorite ? "heart.fill" : "heart")
-                        .foregroundColor(station.isFavorite ? .red : .gray)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(station.isFavorite ? "Remove from Favorites" : "Add to Favorites")
-                .accessibilityValue(station.isFavorite ? "Favorited" : "Not Favorited")
-                
-                Text(station.name)
-                    .font(.headline)
-                Spacer()
-                if let summary = valueSummary {
-                    Text(summary)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(station.name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    Text(station.address)
                         .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(station.ragStatus.color.opacity(0.2))
-                        .foregroundColor(station.ragStatus.color)
-                        .clipShape(Capsule())
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                Text(distanceString)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(distanceString)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                    
+                    if let summary = valueSummary {
+                        Text(summary)
+                            .font(.system(size: 10, weight: .bold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(station.ragStatus.color.opacity(0.15))
+                            .foregroundStyle(station.ragStatus.color)
+                            .clipShape(Capsule())
+                    }
+                }
             }
             
-            Text(station.address)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            HStack {
+            HStack(spacing: 8) {
                 ForEach(station.prices.sorted(by: { $0.grade < $1.grade })) { price in
-                    VStack {
+                    HStack(spacing: 2) {
                         Text(price.grade)
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                        Text(String(format: "$%.2f", price.price))
-                            .font(.caption)
+                            .font(.system(size: 10, weight: .black))
+                        Text(String(format: "R%.2f", price.price))
+                            .font(.system(size: 11, weight: .semibold))
                     }
-                    .padding(6)
-                    .background(station.ragStatus.color.opacity(0.1))
-                    .cornerRadius(4)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
                 }
             }
         }

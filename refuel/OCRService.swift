@@ -22,7 +22,7 @@ class OCRService {
     static let shared = OCRService()
     
     func process(images: [UIImage], stations: [Station], completion: @escaping (ScannedReceiptData) -> Void) {
-        var allRecognizedText = [String]()
+        var allObservations = [VNRecognizedTextObservation]()
         let group = DispatchGroup()
         
         for image in images {
@@ -31,16 +31,20 @@ class OCRService {
             
             let request = VNRecognizeTextRequest { (request, error) in
                 defer { group.leave() }
-                if let observations = request.results as? [VNRecognizedTextObservation] {
-                    for observation in observations {
-                        if let topCandidate = observation.topCandidates(1).first {
-                            allRecognizedText.append(topCandidate.string)
-                        }
-                    }
+                if let results = request.results as? [VNRecognizedTextObservation] {
+                    allObservations.append(contentsOf: results)
                 }
             }
             
+            // Optimization for Structured Numerical Data
             request.recognitionLevel = .accurate
+            if #available(iOS 16.0, *) {
+                request.revision = VNRecognizeTextRequestRevision3
+            }
+            request.recognitionLanguages = ["en-US"]
+            request.usesLanguageCorrection = false // Crucial: don't let it "fix" prices into words
+            request.customWords = ["TOTAL", "LITRES", "DIESEL", "UNLEADED", "PETROL", "PRICE", "AMOUNT", "FUEL", "91", "93", "95", "98"]
+            
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
             
             DispatchQueue.global(qos: .userInitiated).async {
@@ -53,17 +57,20 @@ class OCRService {
         }
         
         group.notify(queue: .main) {
-            let data = self.parseText(allRecognizedText, stations: stations)
+            let data = self.parseObservations(allObservations, stations: stations)
             completion(data)
         }
     }
     
-    internal func parseText(_ lines: [String], stations: [Station]) -> ScannedReceiptData {
+    private func parseObservations(_ observations: [VNRecognizedTextObservation], stations: [Station]) -> ScannedReceiptData {
+        // Group observations by line using their vertical position (minY)
+        let lines = groupObservationsByLine(observations)
+        let allLines = lines.map { $0.joined(separator: " ") }
+        
         var data = ScannedReceiptData()
+        let allText = allLines.joined(separator: "\n").lowercased()
         
-        let allText = lines.joined(separator: "\n").lowercased()
-        
-        // 1. Station Name (Fuzzy/Exact check)
+        // 1. Station Name
         for station in stations {
             if allText.contains(station.name.lowercased()) {
                 data.stationName = station.name
@@ -74,47 +81,109 @@ class OCRService {
         // 2. Date
         data.date = extractDate(from: allText)
         
-        // 3. Grade
-        if allText.contains("91") || allText.contains("unleaded") || allText.contains("regular") {
-            data.grade = "91"
-        } else if allText.contains("95") || allText.contains("premium") {
-            data.grade = "95"
-        } else if allText.contains("diesel") {
-            data.grade = "Diesel"
-        }
-        
-        // 4. Numeric Values (Loop over lines for precision)
-        for line in lines {
-            let lowercased = line.lowercased()
+        // 3. Smart Grade & Numerical Extraction using line grouping
+        for lineText in allLines {
+            let lowerLine = lineText.lowercased()
             
-            // Volume (Litres)
-            if data.amountInLitres == nil && (lowercased.contains("litres") || lowercased.contains("volume") || lowercased.contains("qty") || lowercased.contains(" q ")) {
-                if let amount = extractDecimal(from: line) {
+            // Extract Grade
+            if data.grade == nil {
+                if lowerLine.contains("91") || lowerLine.contains("unleaded") || lowerLine.contains("ulp") { data.grade = "91" }
+                else if lowerLine.contains("95") || lowerLine.contains("premium") { data.grade = "95" }
+                else if lowerLine.contains("diesel") { data.grade = "Diesel" }
+            }
+            
+            // Extract Volume (look for L or Litres)
+            if data.amountInLitres == nil && (lowerLine.contains("litres") || lowerLine.contains("vol") || lowerLine.contains("qty")) {
+                if let amount = extractDecimal(from: lineText) {
                     data.amountInLitres = amount
                 }
             }
             
-            // Total Cost
-            if data.totalCost == nil && (lowercased.contains("total") || lowercased.contains("amount") || lowercased.contains("paid")) {
-                if let amount = extractDecimal(from: line) {
-                    data.totalCost = amount
+            // Extract Price Per Litre
+            if data.pricePerLitre == nil && (lowerLine.contains("price") || lowerLine.contains("$/l") || lowerLine.contains("@")) {
+                if let amount = extractDecimal(from: lineText) {
+                    data.pricePerLitre = amount
                 }
             }
             
-            // Price Per Litre
-            if data.pricePerLitre == nil && (lowercased.contains("price") || lowercased.contains("$/l")) {
-                if let amount = extractDecimal(from: line) {
-                    data.pricePerLitre = amount
+            // Extract Total
+            if data.totalCost == nil && (lowerLine.contains("total") || lowerLine.contains("amt") || lowerLine.contains("paid")) {
+                if let amount = extractDecimal(from: lineText) {
+                    data.totalCost = amount
                 }
             }
         }
         
-        // Final fallback: If we have Total and Volume but no Price, calculate it
+        // Fallback calculation
         if let total = data.totalCost, let volume = data.amountInLitres, data.pricePerLitre == nil, volume > 0 {
             data.pricePerLitre = (total / volume * 100).rounded() / 100
         }
         
         return data
+    }
+    
+    private func groupObservationsByLine(_ observations: [VNRecognizedTextObservation]) -> [[String]] {
+        // Sort by vertical position (top to bottom)
+        let sorted = observations.sorted { $0.boundingBox.minY > $1.boundingBox.minY }
+        
+        var lines = [[VNRecognizedTextObservation]]()
+        for observation in sorted {
+            if let lastLine = lines.last,
+               let lastObservation = lastLine.last,
+               abs(lastObservation.boundingBox.midY - observation.boundingBox.midY) < 0.01 {
+                // Same line (small vertical difference)
+                var updatedLine = lastLine
+                updatedLine.append(observation)
+                lines[lines.count - 1] = updatedLine
+            } else {
+                // New line
+                lines.append([observation])
+            }
+        }
+        
+        // Within each line, sort by horizontal position (left to right)
+        return lines.map { line in
+            line.sorted { $0.boundingBox.minX < $1.boundingBox.minX }
+                .compactMap { $0.topCandidates(1).first?.string }
+        }
+    }
+    
+    internal func parsePriceBoard(_ lines: [String]) -> [String: Double] {
+        var results = [String: Double]()
+        let grades = ["91", "93", "95", "98", "diesel", "ulp", "pwr", "premium"]
+        
+        for (index, line) in lines.enumerated() {
+            let lowercased = line.lowercased()
+            
+            for grade in grades {
+                if lowercased.contains(grade) {
+                    let normalizedGrade = mapGrade(grade)
+                    
+                    // Look for price in same line first
+                    if let price = extractDecimal(from: line) {
+                        results[normalizedGrade] = price
+                    } else {
+                        // Look at the next line (often prices are vertically aligned below or next to grade)
+                        for nextIndex in (index + 1)..<min(index + 3, lines.count) {
+                            if let price = extractDecimal(from: lines[nextIndex]) {
+                                results[normalizedGrade] = price
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return results
+    }
+    
+    private func mapGrade(_ raw: String) -> String {
+        switch raw {
+        case "ulp", "91": return "91"
+        case "95", "premium", "pwr": return "95"
+        case "diesel": return "Diesel"
+        default: return raw.uppercased()
+        }
     }
     
     private func extractDate(from text: String) -> Date? {
@@ -142,41 +211,12 @@ class OCRService {
     }
     
     internal func extractDecimal(from text: String) -> Double? {
+        // Look for patterns like 12.34 or 12,34
         let pattern = #"\d+[\.,]\d{2}"#
         if let range = text.range(of: pattern, options: .regularExpression) {
             let decimalStr = text[range].replacingOccurrences(of: ",", with: ".")
             return Double(decimalStr)
         }
         return nil
-    }
-    
-    func parsePriceBoard(_ lines: [String]) -> [String: Double] {
-        var results = [String: Double]()
-        let grades = ["91", "93", "95", "98", "diesel", "ulp", "lrp"]
-        
-        for (index, line) in lines.enumerated() {
-            let lowercased = line.lowercased()
-            
-            for grade in grades {
-                if lowercased.contains(grade) {
-                    let normalizedGrade = grade.uppercased()
-                    
-                    // Try to find a price in the current line
-                    if let price = extractDecimal(from: line) {
-                        results[normalizedGrade] = price
-                    } else {
-                        // Look at the next few lines for a price
-                        for nextIndex in (index + 1)..<min(index + 3, lines.count) {
-                            if let price = extractDecimal(from: lines[nextIndex]) {
-                                results[normalizedGrade] = price
-                                break
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        return results
     }
 }

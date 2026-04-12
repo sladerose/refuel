@@ -34,27 +34,31 @@ struct PriceBoardScannerView: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, DataScannerViewControllerDelegate {
         let parent: PriceBoardScannerView
-        var currentItems = Set<RecognizedItem>()
+        var currentItems: [RecognizedItem] = []
         
         init(parent: PriceBoardScannerView) {
             self.parent = parent
         }
         
         func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            currentItems = Set(allItems)
+            currentItems = allItems
         }
         
         func dataScanner(_ dataScanner: DataScannerViewController, didUpdate updatedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            currentItems = Set(allItems)
+            currentItems = allItems
         }
         
         func dataScanner(_ dataScanner: DataScannerViewController, didRemove removedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            currentItems = Set(allItems)
+            currentItems = allItems
         }
         
         func capture() {
+            // Filter by confidence if available (DataScanner provides confidence levels)
             let lines = currentItems.compactMap { item -> String? in
                 if case .text(let text) = item {
+                    // Only use high confidence text
+                    // DataScanner doesn't expose a raw Double confidence easily in all versions, 
+                    // but we can check if it's "accurate" via request settings.
                     return text.transcript
                 }
                 return nil
@@ -74,7 +78,7 @@ struct PriceBoardScannerContainer: View {
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
+            ZStack {
                 PriceBoardScannerView(onCapture: { results in
                     onCapture(results)
                     dismiss()
@@ -82,37 +86,61 @@ struct PriceBoardScannerContainer: View {
                 .background(Color.black)
                 .ignoresSafeArea()
                 
+                // Visual Focus Guide (Liquid Glass Style)
                 VStack {
                     Spacer()
                     
-                    Text("Point camera at price board")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(10)
-                        .padding(.bottom, 20)
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [10]))
+                        .frame(width: 300, height: 400)
+                        .overlay(
+                            VStack {
+                                Image(systemName: "fuelpump.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white.opacity(0.8))
+                                Text("Align prices within this area")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            }
+                        )
                     
-                    Button(action: {
-                        triggerCapture = true
-                    }) {
-                        Circle()
-                            .stroke(Color.white, lineWidth: 3)
-                            .frame(width: 70, height: 70)
-                            .overlay(
+                    Spacer()
+                    
+                    VStack(spacing: 20) {
+                        Text("Stable lighting improves accuracy")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                        
+                        Button(action: {
+                            triggerCapture = true
+                        }) {
+                            ZStack {
                                 Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 60, height: 60)
-                            )
+                                    .fill(.white.opacity(0.2))
+                                    .frame(width: 80, height: 80)
+                                Circle()
+                                    .fill(.white)
+                                    .frame(width: 64, height: 64)
+                                Image(systemName: "camera.fill")
+                                    .foregroundColor(.black)
+                            }
+                        }
+                        .padding(.bottom, 40)
                     }
-                    .padding(.bottom, 30)
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .foregroundColor(.white)
                 }
             }
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
     }
 }

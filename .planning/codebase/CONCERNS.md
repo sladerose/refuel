@@ -5,10 +5,9 @@
 ## Tech Debt
 
 **God View Pattern:**
-- Issue: `ContentView.swift` has grown too large (493 lines) and contains business logic, networking, and several sub-view definitions that should be moved to separate files.
-- Files: `refuel/ContentView.swift`
-- Impact: Harder to maintain, test, and understand. Increases risk of side effects when making changes.
-- Fix approach: Refactor `HikeAlertBanner`, `RefuelHistoryView`, and `AddRefuelLogView` into their own files. Extract refresh logic into a ViewModel or Service.
+- Status: [x] Fixed
+- Resolution: Refactored `ContentView.swift` by extracting `HikeAlertBanner`, `RefuelHistoryView`, and `AddRefuelLogView` into separate files. Business logic and service management moved to `ContentViewModel`.
+- Files: `refuel/ContentView.swift`, `refuel/ContentViewModel.swift`, `refuel/HikeAlertBanner.swift`, `refuel/HistoryViews.swift`
 
 **Mock Data Dependency:**
 - Issue: The app currently relies on `MockFuelPriceService` for all fuel price data. No real API integration exists.

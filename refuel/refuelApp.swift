@@ -16,8 +16,9 @@ struct refuelApp: App {
             FuelPrice.self,
             RefuelEvent.self,
             UserProfile.self,
-            LotteryEntry.self,
+            LuckyDrawEntry.self
         ])
+
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {

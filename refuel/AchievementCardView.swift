@@ -86,7 +86,6 @@ struct AchievementCardView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     AchievementCardView(rank: .expertScout, savings: 124.50, streak: 12)
-        .previewLayout(.sizeThatFits)
 }

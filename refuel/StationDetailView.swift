@@ -16,71 +16,75 @@ struct StationDetailView: View {
     @State private var detectedBoardPrices: [String: Double] = [:]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(station.name)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        Text(station.address)
-                            .font(.title3)
-                            .foregroundColor(.secondary)
-                    }
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(station.name)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
                     
-                    Spacer()
+                    Text(station.address)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
                     
-                    Button {
-                        station.isFavorite.toggle()
-                    } label: {
-                        Image(systemName: station.isFavorite ? "heart.fill" : "heart")
-                            .font(.title)
-                            .foregroundColor(station.isFavorite ? .red : .gray)
-                            .padding(10)
-                            .background(.thinMaterial)
-                            .clipShape(Circle())
+                    if let zScore = station.zScore {
+                        HStack {
+                            Image(systemName: "info.circle.fill")
+                            Text(priceComparisonText(zScore: zScore))
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(station.ragStatus.color.opacity(0.1))
+                        .foregroundStyle(station.ragStatus.color)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.top, 4)
                     }
                 }
-                .padding(.horizontal)
-                
-                // RAG Status & Price Comparison
-                if let zScore = station.zScore {
+                .padding(.vertical, 8)
+            }
+            
+            Section("Fuel Prices") {
+                ForEach(station.prices.sorted(by: { $0.grade < $1.grade })) { price in
                     HStack {
-                        Image(systemName: "info.circle.fill")
-                        Text(priceComparisonText(zScore: zScore))
+                        Label {
+                            Text(price.grade)
+                                .fontWeight(.semibold)
+                        } icon: {
+                            Image(systemName: "fuelpump.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Text(String(format: "R%.2f", price.price))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
                     }
-                    .font(.headline)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(station.ragStatus.color.opacity(0.1))
-                    .foregroundColor(station.ragStatus.color)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
                 }
-                
-                // Opening Hours
+            }
+            
+            Section("Information") {
                 if let hours = station.openingHours {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Opening Hours", systemImage: "clock")
-                            .font(.headline)
+                    LabeledContent("Opening Hours") {
                         Text(hours)
-                            .font(.body)
+                            .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal)
                 }
                 
-                // Services
                 if let services = station.services, !services.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Services", systemImage: "wrench.and.screwdriver")
-                            .font(.headline)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Services")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         
                         FlowLayout(spacing: 8) {
                             ForEach(services, id: \.self) { service in
                                 Text(service)
                                     .font(.caption)
+                                    .fontWeight(.bold)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
                                     .background(Color.blue.opacity(0.1))
@@ -89,97 +93,63 @@ struct StationDetailView: View {
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.vertical, 4)
                 }
-                
-                // Prices
-                VStack(alignment: .leading, spacing: 12) {
-                    Label("Current Prices", systemImage: "fuelpump")
-                        .font(.headline)
-                    
-                    ForEach(station.prices.sorted(by: { $0.grade < $1.grade })) { price in
-                        HStack {
-                            Text(price.grade)
-                                .font(.body)
-                                .fontWeight(.medium)
-                            Spacer()
-                            Text(String(format: "$%.2f", price.price))
-                                .font(.body)
-                                .fontWeight(.bold)
-                        }
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
-                    }
-                }
-                .padding(.horizontal)
-                
-                // Navigation Buttons
-                VStack(spacing: 12) {
-                    Button(action: {
-                        showingScanner = true
-                    }) {
-                        Label("Scan Receipt", systemImage: "camera.viewfinder")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.orange)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                    
-                    Button(action: {
-                        showingBoardScanner = true
-                    }) {
-                        Label("Scan Price Board", systemImage: "fuelpump.circle")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                    
-                    Button(action: {
-                        NavigationService.shared.open(
-                            app: .appleMaps,
-                            coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
-                            label: station.name
-                        )
-                    }) {
-                        Label("Navigate in Apple Maps", systemImage: "map")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                    
-                    Button(action: {
-                        NavigationService.shared.open(
-                            app: .googleMaps,
-                            coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
-                            label: station.name
-                        )
-                    }) {
-                        Label("Navigate in Google Maps", systemImage: "location")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                }
-                .padding()
             }
-            .padding(.vertical)
+            
+            Section("Actions") {
+                Button {
+                    showingScanner = true
+                } label: {
+                    Label("Scan Receipt", systemImage: "camera.viewfinder")
+                }
+                
+                Button {
+                    showingBoardScanner = true
+                } label: {
+                    Label("Scan Price Board", systemImage: "fuelpump.circle")
+                }
+                
+                Button {
+                    NavigationService.shared.open(
+                        app: .appleMaps,
+                        coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
+                        label: station.name
+                    )
+                } label: {
+                    Label("Navigate in Apple Maps", systemImage: "map")
+                }
+                
+                Button {
+                    NavigationService.shared.open(
+                        app: .googleMaps,
+                        coordinate: CLLocationCoordinate2D(latitude: station.latitude, longitude: station.longitude),
+                        label: station.name
+                    )
+                } label: {
+                    Label("Navigate in Google Maps", systemImage: "location")
+                }
+            }
         }
+        .listStyle(.insetGrouped)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    station.isFavorite.toggle()
+                } label: {
+                    Image(systemName: station.isFavorite ? "heart.fill" : "heart")
+                        .foregroundStyle(station.isFavorite ? .red : .primary)
+                }
+            }
+        }
         .sheet(isPresented: $showingScanner) {
             ReceiptScannerView { result in
                 switch result {
                 case .success(let images):
                     OCRService.shared.process(images: images, stations: stations) { data in
                         var finalData = data
-                        finalData.stationName = station.name // Pre-fill current station
+                        finalData.stationName = station.name
                         self.scannedData = finalData
                         self.showingAddLog = true
                     }
@@ -195,7 +165,7 @@ struct StationDetailView: View {
             PriceBoardScannerContainer { results in
                 self.detectedBoardPrices = results
                 self.showingVerification = true
-                gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan") // Award for capturing board
+                gamificationManager.awardXP(amount: 30, stationName: station.name, type: "board_scan")
             }
         }
         .sheet(isPresented: $showingVerification) {
@@ -205,15 +175,15 @@ struct StationDetailView: View {
     
     private func priceComparisonText(zScore: Double) -> String {
         if zScore < -1.5 {
-            return "Exceptional value! This is one of the cheapest stations in the area."
+            return "Exceptional value!"
         } else if zScore < -0.5 {
-            return "Good value. Prices are significantly lower than average."
+            return "Good local value."
         } else if zScore <= 0.5 {
-            return "Average price for this area."
+            return "Average local price."
         } else if zScore <= 1.5 {
-            return "Slightly more expensive than average."
+            return "Slightly above average."
         } else {
-            return "Expensive. Consider checking other stations for better deals."
+            return "Above local average."
         }
     }
 }

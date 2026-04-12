@@ -156,7 +156,7 @@ final class UserProfile {
 }
 
 @Model
-final class LotteryEntry {
+final class LuckyDrawEntry {
     @Attribute(.unique) var id: UUID
     var date: Date
     var stationName: String

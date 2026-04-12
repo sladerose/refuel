@@ -18,13 +18,11 @@ struct PriceVerificationView: View {
     init(station: Station, detectedPrices: [String: Double]) {
         self.station = station
         
-        // Initialize with detected prices, matching existing grades if possible
         var entries = [PriceEntry]()
         for (grade, price) in detectedPrices {
             entries.append(PriceEntry(grade: grade, price: price))
         }
         
-        // If no prices detected, show existing station prices for editing
         if entries.isEmpty {
             for fuelPrice in station.prices {
                 entries.append(PriceEntry(grade: fuelPrice.grade, price: fuelPrice.price))
@@ -37,37 +35,63 @@ struct PriceVerificationView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(header: Text("Detected Prices for \(station.name)")) {
-                    if editedPrices.isEmpty {
-                        Text("No prices detected. Please add manually.")
+                Section {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(station.name)
+                            .font(.headline)
+                        Text("Please confirm or correct the scanned prices below.")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
-                    ForEach($editedPrices) { $entry in
-                        HStack {
-                            Text(entry.grade)
-                                .font(.headline)
-                            Spacer()
-                            TextField("Price", value: $entry.price, format: .currency(code: "ZAR"))
-                                .keyboardType(.decimalPad)
-                                .multilineTextAlignment(.trailing)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
+                    .padding(.vertical, 4)
+                }
+                
+                Section {
+                    if editedPrices.isEmpty {
+                        ContentUnavailableView("No Prices Found", systemImage: "text.magnifyingglass", description: Text("Scanning didn't find any prices. Use the button below to add them manually."))
+                    } else {
+                        ForEach($editedPrices) { $entry in
+                            HStack {
+                                Label {
+                                    Text(entry.grade)
+                                        .fontWeight(.semibold)
+                                } icon: {
+                                    Image(systemName: "fuelpump.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                TextField("Price", value: $entry.price, format: .currency(code: "ZAR"))
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .fontWeight(.bold)
+                                    .frame(width: 120)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color(.secondarySystemGroupedBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                        .onDelete { indexSet in
+                            editedPrices.remove(atOffsets: indexSet)
                         }
                     }
-                    .onDelete { indexSet in
-                        editedPrices.remove(atOffsets: indexSet)
-                    }
+                } header: {
+                    Text("Detected Prices")
                 }
                 
                 Section {
                     Button(action: {
                         editedPrices.append(PriceEntry(grade: "95", price: 0.0))
                     }) {
-                        Label("Add Grade", systemImage: "plus")
+                        Label("Add Another Grade", systemImage: "plus.circle.fill")
+                            .fontWeight(.semibold)
                     }
+                    .foregroundStyle(.blue)
                 }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Verify Prices")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -80,6 +104,7 @@ struct PriceVerificationView: View {
                         dismiss()
                     }
                     .disabled(editedPrices.isEmpty)
+                    .fontWeight(.bold)
                 }
             }
         }

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct StreakIndicator: View {
     @Environment(GamificationManager.self) private var gamificationManager
@@ -24,5 +25,5 @@ struct StreakIndicator: View {
 
 #Preview {
     StreakIndicator()
-        .environment(GamificationManager(modelContainer: try! ModelContainer(for: Schema([UserProfile.self]), configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])))
+        .environment(GamificationManager(modelContainer: try! ModelContainer(for: Schema([UserProfile.self, LuckyDrawEntry.self]), configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])))
 }
