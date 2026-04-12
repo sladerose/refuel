@@ -1,84 +1,84 @@
 # Codebase Structure
 
-**Analysis Date:** 2024-05-24
+**Analysis Date:** 2024-05-13
 
 ## Directory Layout
 
 ```
 refuel/
-├── refuel/                 # Primary app source code
-│   ├── Assets.xcassets/    # Images, colors, and app icon
-│   ├── ContentView.swift   # Main view implementation
-│   ├── Item.swift          # SwiftData model
-│   └── refuelApp.swift     # App entry point and environment setup
-├── refuelTests/            # Unit testing targets
-│   └── refuelTests.swift   # Unit tests using Swift Testing framework
-├── refuelUITests/          # UI testing targets
-│   ├── refuelUITests.swift # UI test cases
-│   └── refuelUITestsLaunchTests.swift # Launch performance tests
-└── refuel.xcodeproj        # Xcode project configuration
+├── refuel/               # Primary source code
+│   ├── Assets.xcassets/  # Images, colors, and app icons
+│   ├── *.swift           # All source files (Views, Models, Services)
+├── refuelTests/          # Unit tests
+├── refuelUITests/        # UI tests
+└── refuel.xcodeproj/     # Xcode project configuration
 ```
 
 ## Directory Purposes
 
-**refuel/:**
-- Purpose: Root directory for the main application target.
-- Contains: Swift source files and asset catalogs.
-- Key files: `refuelApp.swift`, `ContentView.swift`.
+**refuel/refuel/:**
+- Purpose: Contains all application source code, resources, and assets.
+- Contains: SwiftUI views, SwiftData models, Service implementations, and Assets.
+- Key files: `refuelApp.swift`, `Models.swift`, `ContentView.swift`.
 
 **refuelTests/:**
-- Purpose: Contains unit tests for models and logic.
-- Contains: Swift files using the `Testing` module.
-- Key files: `refuelTests.swift`.
+- Purpose: Unit testing for services and models.
+- Contains: XCTest files.
+- Key files: `GeofenceTests.swift`, `OCRServiceTests.swift`.
 
 **refuelUITests/:**
-- Purpose: Contains automated UI tests.
-- Contains: Swift files using the `XCTest` module for UI interaction.
-- Key files: `refuelUITests.swift`.
+- Purpose: End-to-end UI testing.
+- Contains: XCUITest files.
 
 ## Key File Locations
 
 **Entry Points:**
-- `refuel/refuelApp.swift`: Root entry point for the iOS application.
+- `refuel/refuel/refuelApp.swift`: App lifecycle and environment setup.
+- `refuel/refuel/ContentView.swift`: Main UI navigation hub.
 
 **Configuration:**
-- `refuel.xcodeproj`: Project-level settings and build configuration.
+- `refuel/refuel/Assets.xcassets/`: App colors (AccentColor) and icons.
+- `refuel/refuel/refuelApp.swift`: SwiftData schema and container configuration.
 
 **Core Logic:**
-- `refuel/Item.swift`: Persistent data model definition.
-- `refuel/ContentView.swift`: Primary user interface logic and state management.
+- `refuel/refuel/Models.swift`: Data models and derived properties.
+- `refuel/refuel/FuelPriceIngestor.swift`: Background data processing and analytics.
+- `refuel/refuel/GamificationManager.swift`: User progression and rewards logic.
 
 **Testing:**
-- `refuelTests/refuelTests.swift`: Location for logic/unit tests.
-- `refuelUITests/refuelUITests.swift`: Location for interface/E2E tests.
+- `refuelTests/`: Unit tests for business logic.
 
 ## Naming Conventions
 
 **Files:**
-- PascalCase: Matches struct/class names (e.g., `ContentView.swift`).
+- Views: `[Name]View.swift` (e.g., `StationListView.swift`)
+- Services: `[Name]Service.swift` (e.g., `FuelPriceService.swift`)
+- Managers: `[Name]Manager.swift` (e.g., `LocationManager.swift`)
+- Ingestors: `[Name]Ingestor.swift` (e.g., `FuelPriceIngestor.swift`)
 
 **Directories:**
-- PascalCase (usually matching targets): `refuelTests`.
+- Flat structure currently used for source files.
 
 ## Where to Add New Code
 
 **New Feature:**
-- Primary code: `refuel/`
-- Tests: `refuelTests/`
+- UI components: `refuel/refuel/[Feature]View.swift`
+- Logic/Coordination: `refuel/refuel/[Feature]Manager.swift` or `[Feature]Service.swift`
+- Tests: `refuelTests/[Feature]Tests.swift`
 
-**New Component/Module:**
-- Implementation: `refuel/Views/` (suggested directory) or root `refuel/`.
+**New Model:**
+- Add to `refuel/refuel/Models.swift` and register in `refuelApp.swift`'s `Schema`.
 
 **Utilities:**
-- Shared helpers: `refuel/Utilities/` (suggested directory).
+- Currently added as extensions or top-level functions within relevant files.
 
 ## Special Directories
 
-**Assets.xcassets:**
-- Purpose: Manages static resources.
-- Generated: No (manually managed).
-- Committed: Yes.
+**Assets.xcassets/:**
+- Purpose: Asset catalog for images and colors.
+- Generated: No (Managed by developer)
+- Committed: Yes
 
 ---
 
-*Structure analysis: 2024-05-24*
+*Structure analysis: 2024-05-13*

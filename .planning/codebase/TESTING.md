@@ -1,102 +1,145 @@
 # Testing Patterns
 
-**Analysis Date:** 2024-05-24
+**Analysis Date:** 2026-04-12
 
 ## Test Framework
 
 **Runner:**
-- Swift Testing Framework (Unit Tests)
-- XCTest (UI Tests)
-- Config: Managed via Xcode project targets and schemes.
+- Swift Testing Framework (Apple's modern testing framework introduced in Swift 6/Xcode 16).
+- Config: Managed within the Xcode project target `refuelTests`.
 
 **Assertion Library:**
-- `Testing` module (`#expect`) for Unit Tests.
-- `XCTest` module (`XCTAssert`) for UI Tests.
+- Standard Swift Testing library via `import Testing`.
+- Key assertions: `#expect(condition)`.
 
 **Run Commands:**
 ```bash
-# In Xcode
-CMD + U              # Run all tests
+# Executed via Xcode:
+Command + U           # Run all tests
+Command + Alt + U     # Run selected tests
 ```
 
 ## Test File Organization
 
 **Location:**
-- Separate targets: `refuelTests/` and `refuelUITests/`.
+- Co-located in a dedicated test target directory: `refuelTests/`.
 
 **Naming:**
-- PascalCase with suffix: `refuelTests.swift`, `refuelUITests.swift`.
+- Matches the source file with a `Tests` suffix.
+- Example: `OCRServiceTests.swift` for `OCRService.swift`.
 
 **Structure:**
 ```
 refuelTests/
+├── GeofenceTests.swift
+├── NavigationServiceTests.swift
+├── OCRServiceTests.swift
 ├── refuelTests.swift
-refuelUITests/
-├── refuelUITests.swift
-└── refuelUITestsLaunchTests.swift
+└── ValueAnalyticsTests.swift
 ```
 
 ## Test Structure
 
 **Suite Organization:**
-```swift
+```typescript
 import Testing
 @testable import refuel
 
-struct refuelTests {
-    @Test func example() async throws {
-        // ...
+@MainActor // Optional: depends on whether testing UI-related or async-main code
+struct ComponentTests {
+    // Setup logic can be in init()
+    init() {
+        // ... initial setup ...
+    }
+
+    @Test func testFunctionality() async throws {
+        // Given
+        // ... arrangement ...
+
+        // When
+        // ... action ...
+
+        // Then
+        #expect(result == expected)
     }
 }
 ```
 
 **Patterns:**
-- **Unit Testing:** Uses the new `@Test` attribute and `#expect` macro for assertions.
-- **UI Testing:** Uses `XCTestCase` with `XCUIApplication()` for end-to-end flow validation.
+- **Setup pattern:** Using `init()` in test structs to initialize state (e.g., in-memory `ModelContainer`).
+- **Teardown pattern:** Not explicitly used, as structs are recreated for each test.
+- **Assertion pattern:** Use `#expect` for logic checks and `throws` for expected error cases.
 
 ## Mocking
 
-**Framework:** Not implemented.
+**Framework:** Manual dependency injection and state setup. No external mocking library detected.
+
+**Patterns:**
+```typescript
+@Test func testReceiptParsing() async throws {
+    // Create actual model instances for use in the test
+    let stations = [
+        Station(name: "Shell", address: "123 Road", latitude: 0, longitude: 0),
+        Station(name: "BP", address: "456 Road", latitude: 0, longitude: 0)
+    ]
+    
+    // Call the service under test
+    let data = ocrService.parseText(lines, stations: stations)
+    
+    // Assert against results
+    #expect(data.stationName == "Shell")
+}
+```
 
 **What to Mock:**
-- In-memory `ModelContainer` used for testing data-related logic.
+- Network responses (via local service injection if needed, though not explicitly shown in tests).
+- Local databases (using in-memory `SwiftData` containers).
+
+**What NOT to Mock:**
+- Business logic models (`Station`, `FuelPrice`).
+- Calculations (tested directly with tolerances).
 
 ## Fixtures and Factories
 
 **Test Data:**
-- Currently uses manual instantiation in tests.
+```typescript
+let s1 = Station(name: "S1", address: "A1", latitude: 0, longitude: 0)
+let p1 = FuelPrice(grade: "91", price: 1.0, station: s1)
+```
 
 **Location:**
-- Inline in test methods.
+- Inline within test functions or `init()`. No separate shared fixture files detected.
 
 ## Coverage
 
-**Requirements:** None enforced.
+**Requirements:** None enforced in CI at this stage.
 
 **View Coverage:**
-- Accessible via Xcode Report navigator after running tests.
+- Xcode "Report" navigator after running tests.
 
 ## Test Types
 
 **Unit Tests:**
-- Logic tests for models and view-models (if added).
-- Location: `refuelTests/`.
+- Focus on logic in `Service` and `Manager` classes.
+- Examples: `OCRServiceTests.swift`, `ValueAnalyticsTests.swift`.
 
 **Integration Tests:**
-- Testing model persistence with in-memory containers.
+- Testing interaction between `SwiftData` models and logic.
+- Example: `ValueAnalyticsTests.swift` (using a real `ModelContainer`).
 
 **E2E Tests:**
-- UI tests that launch the app and interact with it.
-- Location: `refuelUITests/`.
+- UI tests located in `refuelUITests/`.
+- Uses `XCTest` framework (Standard UI testing practice).
 
 ## Common Patterns
 
 **Async Testing:**
-- Supports `async throws` test methods in the Swift Testing framework.
+- Marked with `async throws` to support modern Swift concurrency.
+- Example: `await service.monitorRegion(...)`.
 
 **Error Testing:**
-- Use `#expect(throws: ...)` in Swift Testing.
+- Use `#expect(throws: ...)` or similar where applicable (not heavily shown in current examples).
 
 ---
 
-*Testing analysis: 2024-05-24*
+*Testing analysis: 2026-04-12*
