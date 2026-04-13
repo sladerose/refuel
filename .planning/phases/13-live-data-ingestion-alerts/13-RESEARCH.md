@@ -404,22 +404,25 @@ e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateExpirationForTask
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `api.fuelsa.co.za` return an `effective_date` field in the response (D-02)?**
    - What we know: `FuelSADTO` only has `last_updated` — no `effective_date` field is modelled.
    - What's unclear: Whether the real API returns a future effective date, or only the current price.
    - Recommendation: Plan as "alert immediately on detection" (D-02 fallback). If API does return an effective date, `FuelSADTO` will need a new optional field and the notification `timeInterval` will be calculated from it.
+   - **RESOLVED (Plan 13-01):** D-02 fallback adopted — alert fires immediately on detection. No `effective_date` handling in this phase.
 
 2. **Should `lastAlertedPrice` be persisted in UserDefaults or as a SwiftData model?**
    - What we know: CONTEXT.md marks this as Claude's discretion.
    - What's unclear: If price history is needed later, SwiftData would be better.
    - Recommendation: Use `UserDefaults` for Phase 13 (single scalar value, no history needed, simpler to access from background context without a ModelContext).
+   - **RESOLVED (Plan 13-01):** UserDefaults selected via `refuel.lastAlertedPrice` key.
 
 3. **Where exactly does the Settings UI for region/grade pickers live?**
    - What we know: `ProfileView.swift` has an existing `Section("Settings")`. CONTEXT.md suggests placing alongside existing notification settings.
    - What's unclear: Whether the settings section warrants a dedicated `SettingsView` file or rows inline in `ProfileView`.
    - Recommendation: Add rows directly to the existing `Section("Settings")` in `ProfileView` to minimize scope. No new file needed.
+   - **RESOLVED (Plan 13-03):** Inline `FuelPreferenceSettingsRows` added to existing `Section("Settings")` in ProfileView — no new file.
 
 ---
 
