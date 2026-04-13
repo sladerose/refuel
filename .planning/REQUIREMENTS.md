@@ -33,9 +33,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Engagement (ENGAGE)
 
-- [ ] **ENGAGE-01**: User can track personal contribution stats (XP, Ranks, Streaks).
-- [ ] **ENGAGE-02**: User is incentivized to contribute every 10 days via a "Fuel Streak" system.
-- [ ] **ENGAGE-03**: User can view "Community Impact" metrics (savings for others).
+- [x] **ENGAGE-01**: User can track personal contribution stats (XP, Ranks, Streaks).
+- [x] **ENGAGE-02**: User is incentivized to contribute every 10 days via a "Fuel Streak" system.
+- [x] **ENGAGE-03**: User can view "Community Impact" metrics (savings for others).
 
 ## v2 Requirements
 
@@ -73,9 +73,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRACK-02 | Phase 4 | Complete |
 | VISION-01 | Phase 6 | Complete |
 | VISION-02 | Phase 6 | Complete |
-| ENGAGE-01 | Phase 7 | Planned |
-| ENGAGE-02 | Phase 7 | Planned |
-| ENGAGE-03 | Phase 7 | Planned |
+| ENGAGE-01 | Phase 7 | Complete |
+| ENGAGE-02 | Phase 7 | Complete |
+| ENGAGE-03 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total

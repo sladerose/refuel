@@ -2,6 +2,15 @@
 
 **Refuel** is a modern iOS application designed to help drivers find the best fuel prices in their area instantly. Using real-time location tracking and SIMD-optimized price analytics, Refuel visualizes local price competitiveness through an intuitive RAG (Red-Amber-Green) interface.
 
+## ☁️ v3: The Cloud Foundation (Current)
+
+Refuel v3 activates the cloud layer powering community and live-data features:
+
+- **CloudKit Sync**: Personal data (Favorites, Refuel History) syncs across all user devices via `iCloud.com.refuel.app` private database.
+- **Phase 12 — Global Community Sync**: Public leaderboard and cross-user contribution sharing *(in progress)*
+- **Phase 13 — Live Data Ingestion & Alerts**: Production Fuel SA API integration + 24-hour hike push alerts *(planned)*
+- **Phase 14 — Station Verification Crowdsourcing**: Community consensus voting for station metadata accuracy *(planned)*
+
 ## 🚀 v2: The Engagement Engine
 
 Refuel v2 transforms data entry into a community-driven habit through the **Engagement Engine**:
@@ -53,12 +62,8 @@ Refuel v2 transforms data entry into a community-driven habit through the **Enga
 2. Open `refuel.xcodeproj` in Xcode 16+.
 3. Select an iOS 18+ simulator or a physical device.
 
-**Note on CloudKit Sync (Local-Only Mode):**
-The app is currently configured to run in **local-only mode** using SwiftData. To enable cross-device syncing and community features:
-1. Select the `refuel` target in Xcode -> **Signing & Capabilities**.
-2. Add the **iCloud** capability, check **CloudKit**, and add the `iCloud.com.refuel.app` container.
-3. Add the **Background Modes** capability, checking **Remote notifications** and **Background fetch**.
-4. Uncomment the `cloudKitDatabase` configuration in `refuelApp.swift`.
+**CloudKit Sync:**
+CloudKit is **active by default**. Personal data syncs across devices via the `iCloud.com.refuel.app` private database. New developers must configure Xcode capabilities manually — see [`CLOUDKIT_SETUP.md`](CLOUDKIT_SETUP.md) for step-by-step instructions (requires Apple Developer account).
 
 4. Build and Run (**⌘R**).
 
