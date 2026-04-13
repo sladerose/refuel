@@ -52,6 +52,14 @@ Refuel v2 transforms data entry into a community-driven habit through the **Enga
    ```
 2. Open `refuel.xcodeproj` in Xcode 16+.
 3. Select an iOS 18+ simulator or a physical device.
+
+**Note on CloudKit Sync (Local-Only Mode):**
+The app is currently configured to run in **local-only mode** using SwiftData. To enable cross-device syncing and community features:
+1. Select the `refuel` target in Xcode -> **Signing & Capabilities**.
+2. Add the **iCloud** capability, check **CloudKit**, and add the `iCloud.com.refuel.app` container.
+3. Add the **Background Modes** capability, checking **Remote notifications** and **Background fetch**.
+4. Uncomment the `cloudKitDatabase` configuration in `refuelApp.swift`.
+
 4. Build and Run (**⌘R**).
 
 ---

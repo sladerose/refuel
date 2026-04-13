@@ -81,6 +81,22 @@
 **Class Finality:** Extensive use of `final class` for managers and models to prevent subclassing and improve performance.
 - Examples: `final class Station`, `final class LocationManager`.
 
+## Typography
+
+**Mandate:** Use system text styles (e.g., `.title`, `.headline`, `.body`) instead of fixed point sizes (`.system(size: ...)`). This ensures consistent weight, family, and support for Dynamic Type across all devices.
+
+**Standard Mapping:**
+- **Hero/Large Price:** `.largeTitle.bold()` (e.g., savings, primary prices).
+- **View Titles:** `.title` or `.title2`.
+- **List Headers:** `.headline`.
+- **Main Content:** `.body`.
+- **Secondary Content:** `.subheadline` or `.footnote`.
+- **Badges/Metadata:** `.caption` or `.caption2`.
+
+**Design Variants:**
+- Use `.monospaced` for numeric values (prices, coordinates) to prevent layout shifts.
+- Use `.rounded` for "friendly" UI elements like achievements or gamification.
+
 ---
 
-*Convention analysis: 2026-04-12*
+*Convention analysis: 2026-04-12* (Updated: 2026-04-13)

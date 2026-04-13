@@ -109,6 +109,19 @@ struct ProfileView: View {
                         Text("Scout Network")
                     }
                     
+                    Section("Settings") {
+                        HStack {
+                            Label("iCloud Sync", systemImage: "icloud.and.arrow.up.fill")
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Synced")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    
                     Section {
                         Button {
                             shareImpact()

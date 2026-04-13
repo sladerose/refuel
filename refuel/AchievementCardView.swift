@@ -12,8 +12,7 @@ struct AchievementCardView: View {
                 Image(systemName: "fuelpump.fill")
                     .font(.largeTitle)
                 Text("REFUEL")
-                    .font(.system(.title, design: .monospaced))
-                    .fontWeight(.black)
+                    .font(.title.weight(.black).monospaced())
             }
             .foregroundColor(.orange)
             

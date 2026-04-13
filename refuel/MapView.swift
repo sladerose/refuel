@@ -147,9 +147,9 @@ struct MapMarker: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 0) {
-                if let cheapestPrice = station.prices.min(by: { $0.price < $1.price }) {
+                if let cheapestPrice = (station.prices ?? []).min(by: { $0.price < $1.price }) {
                     Text(String(format: "R%.2f", cheapestPrice.price))
-                        .font(.system(size: 10, weight: .black))
+                        .font(.caption2.weight(.black).monospaced())
                         .padding(.horizontal, 4)
                         .padding(.vertical, 2)
                         .background(.ultraThinMaterial)
@@ -168,7 +168,7 @@ struct MapMarker: View {
                         .shadow(radius: 2)
                     
                     Image(systemName: "fuelpump.fill")
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(.white)
                     
                     if station.isFavorite {

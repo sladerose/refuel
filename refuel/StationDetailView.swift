@@ -47,7 +47,7 @@ struct StationDetailView: View {
             }
             
             Section("Fuel Prices") {
-                ForEach(station.prices.sorted(by: { $0.grade < $1.grade })) { price in
+                ForEach((station.prices ?? []).sorted(by: { $0.grade < $1.grade })) { price in
                     HStack {
                         Label {
                             Text(price.grade)

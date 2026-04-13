@@ -38,7 +38,7 @@ actor FuelPriceIngestor {
             }
             
             // Handle prices: Remove old ones and insert new ones
-            let oldPrices = station.prices
+            let oldPrices = station.prices ?? []
             for oldPrice in oldPrices {
                 modelContext.delete(oldPrice)
             }
@@ -60,7 +60,7 @@ actor FuelPriceIngestor {
     static func calculateAnalytics(for stations: [Station]) {
         // Only consider stations with prices and non-zero prices
         let validData = stations.compactMap { station -> (Station, Double)? in
-            guard let minPrice = station.prices.map(\.price).min(), minPrice > 0 else {
+            guard let minPrice = (station.prices ?? []).compactMap({ $0.price }).min(), minPrice > 0 else {
                 return nil
             }
             return (station, minPrice)

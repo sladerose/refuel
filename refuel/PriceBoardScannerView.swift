@@ -96,11 +96,10 @@ struct PriceBoardScannerContainer: View {
                         .overlay(
                             VStack {
                                 Image(systemName: "fuelpump.circle.fill")
-                                    .font(.system(size: 40))
+                                    .font(.largeTitle)
                                     .foregroundColor(.white.opacity(0.8))
                                 Text("Align prices within this area")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
+                                    .font(.caption.bold())
                                     .foregroundColor(.white)
                             }
                         )

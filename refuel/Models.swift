@@ -4,11 +4,11 @@ import SwiftUI
 
 @Model
 final class Station {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var address: String
-    var latitude: Double
-    var longitude: Double
+    var id: UUID = UUID()
+    var name: String = ""
+    var address: String = ""
+    var latitude: Double = 0.0
+    var longitude: Double = 0.0
     var openingHours: String?
     var services: [String]?
     var lastUpdated: Date?
@@ -49,12 +49,12 @@ final class Station {
     }
     
     @Relationship(deleteRule: .cascade, inverse: \FuelPrice.station)
-    var prices: [FuelPrice] = []
+    var prices: [FuelPrice]? = []
     
     @Relationship(deleteRule: .cascade, inverse: \RefuelEvent.station)
-    var refuelLogs: [RefuelEvent] = []
+    var refuelLogs: [RefuelEvent]? = []
     
-    init(id: UUID = UUID(), name: String, address: String, latitude: Double, longitude: Double, openingHours: String? = nil, services: [String]? = nil, lastUpdated: Date? = nil, zScore: Double? = nil, isFavorite: Bool = false) {
+    init(id: UUID = UUID(), name: String = "", address: String = "", latitude: Double = 0.0, longitude: Double = 0.0, openingHours: String? = nil, services: [String]? = nil, lastUpdated: Date? = nil, zScore: Double? = nil, isFavorite: Bool = false) {
         self.id = id
         self.name = name
         self.address = address
@@ -70,14 +70,14 @@ final class Station {
 
 @Model
 final class FuelPrice {
-    @Attribute(.unique) var id: UUID
-    var grade: String // e.g., "91", "95", "Diesel"
-    var price: Double
-    var timestamp: Date
+    var id: UUID = UUID()
+    var grade: String = "" // e.g., "91", "95", "Diesel"
+    var price: Double = 0.0
+    var timestamp: Date = Date()
     
     var station: Station?
     
-    init(id: UUID = UUID(), grade: String, price: Double, timestamp: Date = Date(), station: Station? = nil) {
+    init(id: UUID = UUID(), grade: String = "", price: Double = 0.0, timestamp: Date = Date(), station: Station? = nil) {
         self.id = id
         self.grade = grade
         self.price = price
@@ -88,12 +88,12 @@ final class FuelPrice {
 
 @Model
 final class RefuelEvent {
-    @Attribute(.unique) var id: UUID
-    var date: Date
-    var amountInLitres: Double
-    var pricePerLitre: Double
-    var grade: String
-    var stationName: String
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var amountInLitres: Double = 0.0
+    var pricePerLitre: Double = 0.0
+    var grade: String = ""
+    var stationName: String = ""
     
     var station: Station?
     
@@ -101,7 +101,7 @@ final class RefuelEvent {
         amountInLitres * pricePerLitre
     }
     
-    init(id: UUID = UUID(), date: Date = Date(), amountInLitres: Double, pricePerLitre: Double, grade: String, stationName: String, station: Station? = nil) {
+    init(id: UUID = UUID(), date: Date = Date(), amountInLitres: Double = 0.0, pricePerLitre: Double = 0.0, grade: String = "", stationName: String = "", station: Station? = nil) {
         self.id = id
         self.date = date
         self.amountInLitres = amountInLitres
@@ -114,11 +114,11 @@ final class RefuelEvent {
 
 @Model
 final class UserProfile {
-    @Attribute(.unique) var id: UUID
-    var xp: Int
-    var streakCount: Int
+    var id: UUID = UUID()
+    var xp: Int = 0
+    var streakCount: Int = 0
     var lastContributionDate: Date?
-    var communityImpact: Double // Rand saved for others
+    var communityImpact: Double = 0.0 // Rand saved for others
     
     enum Rank: String, CaseIterable, Codable {
         case newcomer = "Newcomer"
@@ -157,12 +157,12 @@ final class UserProfile {
 
 @Model
 final class LuckyDrawEntry {
-    @Attribute(.unique) var id: UUID
-    var date: Date
-    var stationName: String
-    var contributionType: String // "scan" or "verify"
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var stationName: String = ""
+    var contributionType: String = "" // "scan" or "verify"
     
-    init(id: UUID = UUID(), date: Date = Date(), stationName: String, contributionType: String) {
+    init(id: UUID = UUID(), date: Date = Date(), stationName: String = "", contributionType: String = "") {
         self.id = id
         self.date = date
         self.stationName = stationName

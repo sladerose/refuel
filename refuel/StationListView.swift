@@ -43,24 +43,24 @@ struct StationListView: View {
     var sortedStations: [Station] {
         switch sortOption {
         case .distance:
-            return stations.sorted {
-                let locA = CLLocation(latitude: $0.latitude, longitude: $0.longitude)
-                let locB = CLLocation(latitude: $1.latitude, longitude: $1.longitude)
+            return stations.sorted(by: { a, b in
+                let locA = CLLocation(latitude: a.latitude, longitude: a.longitude)
+                let locB = CLLocation(latitude: b.latitude, longitude: b.longitude)
                 let distA = locationManager.userLocation?.distance(from: locA) ?? .infinity
                 let distB = locationManager.userLocation?.distance(from: locB) ?? .infinity
                 return distA < distB
-            }
+            })
         case .price:
-            return stations.sorted {
-                let minPriceA = $0.prices.map(\.price).min() ?? .infinity
-                let minPriceB = $1.prices.map(\.price).min() ?? .infinity
+            return stations.sorted(by: { a, b in
+                let minPriceA = (a.prices ?? []).compactMap { $0.price }.min() ?? .infinity
+                let minPriceB = (b.prices ?? []).compactMap { $0.price }.min() ?? .infinity
                 return minPriceA < minPriceB
-            }
+            })
         }
     }
     
     var averageMinPrice: Double? {
-        let minPrices = stations.compactMap { $0.prices.map(\.price).min() }
+        let minPrices = stations.compactMap { ( $0.prices ?? [] ).compactMap { $0.price }.min() }
         guard !minPrices.isEmpty else { return nil }
         return minPrices.reduce(0, +) / Double(minPrices.count)
     }
@@ -159,7 +159,7 @@ struct StationRow: View {
     
     var valueSummary: String? {
         guard let localAverage = localAverage,
-              let minPrice = station.prices.map(\.price).min() else { return nil }
+              let minPrice = (station.prices ?? []).map(\.price).min() else { return nil }
         
         let diff = minPrice - localAverage
         if abs(diff) < 0.005 {
@@ -195,7 +195,7 @@ struct StationRow: View {
                     
                     if let summary = valueSummary {
                         Text(summary)
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.caption2.bold())
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(station.ragStatus.color.opacity(0.15))
@@ -206,12 +206,12 @@ struct StationRow: View {
             }
             
             HStack(spacing: 8) {
-                ForEach(station.prices.sorted(by: { $0.grade < $1.grade })) { price in
+                ForEach((station.prices ?? []).sorted(by: { $0.grade < $1.grade })) { price in
                     HStack(spacing: 2) {
                         Text(price.grade)
-                            .font(.system(size: 10, weight: .black))
+                            .font(.caption2.weight(.black))
                         Text(String(format: "R%.2f", price.price))
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.caption2.weight(.semibold).monospaced())
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)

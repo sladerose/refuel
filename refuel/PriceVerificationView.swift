@@ -24,7 +24,7 @@ struct PriceVerificationView: View {
         }
         
         if entries.isEmpty {
-            for fuelPrice in station.prices {
+            for fuelPrice in (station.prices ?? []) {
                 entries.append(PriceEntry(grade: fuelPrice.grade, price: fuelPrice.price))
             }
         }
@@ -112,7 +112,7 @@ struct PriceVerificationView: View {
     
     private func savePrices() {
         for entry in editedPrices {
-            if let existingPrice = station.prices.first(where: { $0.grade == entry.grade }) {
+            if let existingPrice = (station.prices ?? []).first(where: { $0.grade == entry.grade }) {
                 existingPrice.price = entry.price
                 existingPrice.timestamp = Date()
             } else {

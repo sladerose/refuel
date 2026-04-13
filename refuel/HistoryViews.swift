@@ -65,20 +65,20 @@ struct RefuelHistoryView: View {
                                     .font(.headline)
                                 Spacer()
                                 Text(String(format: "R%.2f", log.totalCost))
-                                    .font(.subheadline)
-                                    .fontWeight(.bold)
+                                    .font(.subheadline.bold().monospaced())
                             }
                             
                             HStack {
                                 Label(log.date.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
                                 Spacer()
                                 Text("\(String(format: "%.1f", log.amountInLitres))L @ R\(String(format: "%.2f", log.pricePerLitre))/L")
+                                    .monospaced()
                             }
                             .font(.caption)
                             .foregroundColor(.secondary)
                             
                             Text(log.grade)
-                                .font(.system(size: 10, weight: .black))
+                                .font(.caption2.weight(.black))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.blue.opacity(0.1))
@@ -253,7 +253,7 @@ struct AddRefuelLogView: View {
         // Update the station's price if we have a linked station
         // Only update if the refuel is recent (last 24 hours)
         if let station = selectedStation, abs(date.timeIntervalSinceNow) < 86400 {
-            if let existingPrice = station.prices.first(where: { $0.grade == grade }) {
+            if let existingPrice = (station.prices ?? []).first(where: { $0.grade == grade }) {
                 existingPrice.price = priceVal
                 existingPrice.timestamp = date
             } else {
