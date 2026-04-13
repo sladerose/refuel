@@ -10,7 +10,7 @@ import SwiftData
 
 @main
 struct refuelApp: App {
-    var sharedModelContainer: ModelContainer = {
+    nonisolated(unsafe) static let sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Station.self,
             FuelPrice.self,
@@ -34,8 +34,8 @@ struct refuelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(modelContainer: sharedModelContainer)
+            ContentView(modelContainer: Self.sharedModelContainer)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(Self.sharedModelContainer)
     }
 }
