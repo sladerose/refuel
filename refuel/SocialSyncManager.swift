@@ -52,8 +52,11 @@ final class SocialSyncManager {
 
     // MARK: - Private
 
-    @ObservationIgnored private lazy var publicDB = CKContainer(identifier: SocialSyncManager.containerID).publicCloudDatabase
-    private var pendingSyncTask: Task<Void, Never>?
+    @ObservationIgnored private var pendingSyncTask: Task<Void, Never>?
+
+    private var publicDB: CKDatabase {
+        CKContainer(identifier: Self.containerID).publicCloudDatabase
+    }
 
     // MARK: - Opt-in write (D-07)
 
@@ -105,6 +108,10 @@ final class SocialSyncManager {
     /// NOTE: Requires a Sortable index on the `xp` field in CloudKit Console
     /// (see RESEARCH.md Pitfall 1 and VALIDATION.md manual check).
     func fetchLeaderboard(limit: Int = 100) async {
+        guard await accountIsAvailable() else {
+            syncState = .error("iCloud not available.")
+            return
+        }
         syncState = .syncing
         let predicate = NSPredicate(value: true)
         let query = CKQuery(recordType: Self.recordType, predicate: predicate)
