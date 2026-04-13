@@ -10,7 +10,7 @@ import SwiftData
 
 @main
 struct refuelApp: App {
-    nonisolated(unsafe) static let sharedModelContainer: ModelContainer = {
+    static let sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Station.self,
             FuelPrice.self,
