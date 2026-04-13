@@ -161,11 +161,20 @@ final class LuckyDrawEntry {
     var date: Date = Date()
     var stationName: String = ""
     var contributionType: String = "" // "scan" or "verify"
-    
+
     init(id: UUID = UUID(), date: Date = Date(), stationName: String = "", contributionType: String = "") {
         self.id = id
         self.date = date
         self.stationName = stationName
         self.contributionType = contributionType
+    }
+}
+
+extension UserProfile {
+    /// Derived public alias for leaderboard display. Per D-01: Scout# + first 4 hex chars of UUID.
+    var communityAlias: String {
+        let hex = id.uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        let suffix = String(hex.prefix(4)).uppercased()
+        return "Scout#\(suffix)"
     }
 }

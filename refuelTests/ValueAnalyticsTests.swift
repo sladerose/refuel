@@ -17,15 +17,15 @@ struct ValueAnalyticsTests {
         
         let s1 = Station(name: "S1", address: "A1", latitude: 0, longitude: 0)
         let p1 = FuelPrice(grade: "91", price: 1.0, station: s1)
-        s1.prices.append(p1)
-        
+        s1.prices = (s1.prices ?? []) + [p1]
+
         let s2 = Station(name: "S2", address: "A2", latitude: 0, longitude: 0)
         let p2 = FuelPrice(grade: "91", price: 2.0, station: s2)
-        s2.prices.append(p2)
-        
+        s2.prices = (s2.prices ?? []) + [p2]
+
         let s3 = Station(name: "S3", address: "A3", latitude: 0, longitude: 0)
         let p3 = FuelPrice(grade: "91", price: 3.0, station: s3)
-        s3.prices.append(p3)
+        s3.prices = (s3.prices ?? []) + [p3]
         
         context.insert(s1)
         context.insert(s2)
