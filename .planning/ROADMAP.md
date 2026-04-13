@@ -18,6 +18,35 @@
 - [ ] **Phase 13: Live Data Ingestion & Alerts** - Connect to live external data and push critical fuel hike alerts to users.
 - [ ] **Phase 14: Station Verification Crowdsourcing** - Use community input to maintain accurate station metadata via consensus voting.
 
+### Phase 12: Global Community Sync
+
+**Goal:** Enable users to share their contributions with the broader community via CloudKit public database and global leaderboard.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — SocialSyncManager CloudKit engine + UserProfile.communityAlias + GamificationManager sync hook + Wave 0 test stubs
+- [ ] 12-02-PLAN.md — LeaderboardView + LeaderboardRowView — all 9 UI states (loading, empty, error, sharing-off, You row, sticky footer)
+- [ ] 12-03-PLAN.md — ProfileView opt-in toggle (CommunitySyncSettingsRow) + leaderboard nav entry + environment wiring
+
+### Phase 13: Live Data Ingestion & Alerts
+
+**Goal:** Connect to live external data and push critical fuel hike alerts to users.
+
+**Tasks:**
+- Fully integrate `FuelPriceSyncService` with the production Fuel SA API
+- Implement `BGAppRefreshTask` for reliable background data ingestion
+- Set up predictive Push Notifications to alert users before confirmed fuel price hikes
+
+### Phase 14: Station Verification Crowdsourcing
+
+**Goal:** Use community input to maintain accurate station metadata via consensus voting.
+
+**Tasks:**
+- Extend `PriceVerificationView` to flag incorrect station metadata
+- Submit verifications to public CloudKit database for consensus voting
+- Reward users with bonus XP for confirmed metadata corrections
+
 ## Progress Table
 
 | Milestone | Tasks | Status | Date |
