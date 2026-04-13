@@ -33,10 +33,12 @@ Plans:
 
 **Goal:** Connect to live external data and push critical fuel hike alerts to users.
 
-**Tasks:**
-- Fully integrate `FuelPriceSyncService` with the production Fuel SA API
-- Implement `BGAppRefreshTask` for reliable background data ingestion
-- Set up predictive Push Notifications to alert users before confirmed fuel price hikes
+**Plans:** 3 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — UserDefaults prefs extension + FuelPriceSyncService live URLSession + HikeDetector + unit tests (TDD)
+- [ ] 13-02-PLAN.md — ProactiveService calendar logic removal + HikeAlertBanner Bool-driven refactor
+- [ ] 13-03-PLAN.md — refuelApp.swift BGAppRefreshTask wiring + Secrets.xcconfig + ProfileView region/grade pickers
 
 ### Phase 14: Station Verification Crowdsourcing
 
