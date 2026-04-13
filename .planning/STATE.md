@@ -65,6 +65,12 @@ Plan: 1 of 1 — COMPLETE
 - [x] Phase 11: The Cloud Foundation (CloudKit fully activated, sync verified)
 - [x] Maintenance: Typography Standardization
 
+### Quick Tasks Completed
+
+| ID | Task | Commit | Date |
+|----|------|--------|------|
+| 260413-pbk | Fix main thread I/O warning — ModelContainer to `nonisolated(unsafe) static let` | b5fcaca | 2026-04-13 |
+
 ### Blockers
 
 - None
