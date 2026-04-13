@@ -52,7 +52,7 @@ final class SocialSyncManager {
 
     // MARK: - Private
 
-    private lazy var publicDB = CKContainer(identifier: SocialSyncManager.containerID).publicCloudDatabase
+    @ObservationIgnored private lazy var publicDB = CKContainer(identifier: SocialSyncManager.containerID).publicCloudDatabase
     private var pendingSyncTask: Task<Void, Never>?
 
     // MARK: - Opt-in write (D-07)
