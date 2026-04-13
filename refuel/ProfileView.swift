@@ -105,10 +105,14 @@ struct ProfileView: View {
                                 .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 8)
+
+                    NavigationLink(destination: LeaderboardView()) {
+                        Label("Global Leaderboard", systemImage: "chart.bar.fill")
+                    }
                     } header: {
                         Text("Scout Network")
                     }
-                    
+
                     Section("Settings") {
                         HStack {
                             Label("iCloud Sync", systemImage: "icloud.and.arrow.up.fill")
@@ -120,6 +124,7 @@ struct ProfileView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                        CommunitySyncSettingsRow()
                     }
                     
                     Section {
@@ -183,6 +188,115 @@ struct ProfileView: View {
         case .reliableContributor: return "shield.fill"
         case .expertScout: return "sparkles"
         case .fuelLegend: return "crown.fill"
+        }
+    }
+}
+
+// MARK: - CommunitySyncSettingsRow (UI-SPEC Component Inventory)
+
+struct CommunitySyncSettingsRow: View {
+    @Environment(SocialSyncManager.self) private var socialSyncManager
+    @Environment(GamificationManager.self) private var gamificationManager
+
+    @State private var showOptOutDialog = false
+    @State private var inlineMessage: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Label("Community Sharing", systemImage: "globe")
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { socialSyncManager.isCommunityShareEnabled },
+                    set: { newValue in
+                        if newValue {
+                            socialSyncManager.isCommunityShareEnabled = true
+                            Task { await handleToggleOn() }
+                        } else {
+                            showOptOutDialog = true
+                        }
+                    }
+                ))
+                .labelsHidden()
+                .tint(.orange)
+            }
+            .frame(minHeight: 44)
+
+            Text("Share your alias and XP with the global Fuel Scout community.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let message = inlineMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(
+                        message.hasPrefix("Couldn't") ? Color.red : Color.secondary
+                    )
+                    .transition(.opacity)
+            }
+
+            if case .syncing = socialSyncManager.syncState, socialSyncManager.isCommunityShareEnabled {
+                HStack(spacing: 4) {
+                    ProgressView()
+                        .controlSize(.mini)
+                    Text("Syncing...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: inlineMessage)
+        .animation(.easeInOut(duration: 0.2), value: socialSyncManager.syncState == .idle)
+        .confirmationDialog(
+            "Stop sharing your stats?",
+            isPresented: $showOptOutDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Stop Sharing", role: .destructive) {
+                Task { await handleToggleOff() }
+            }
+            Button("Keep Sharing", role: .cancel) {}
+        } message: {
+            Text("Your alias and XP will be removed from the global leaderboard.")
+        }
+        .onChange(of: socialSyncManager.syncState) { _, newState in
+            if case .error(let msg) = newState {
+                socialSyncManager.isCommunityShareEnabled = false
+                withAnimation { inlineMessage = msg }
+                Task {
+                    try? await Task.sleep(for: .seconds(4))
+                    withAnimation { inlineMessage = nil }
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func handleToggleOn() async {
+        guard let profile = gamificationManager.userProfile else { return }
+        let contributions = gamificationManager.totalContributionCount()
+        await socialSyncManager.enableSharing(for: profile, contributionCount: contributions)
+        if case .error = socialSyncManager.syncState {
+            // onChange handler sets inlineMessage from error
+        } else {
+            withAnimation { inlineMessage = "Sharing enabled" }
+            Task {
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation { inlineMessage = nil }
+            }
+        }
+    }
+
+    @MainActor
+    private func handleToggleOff() async {
+        guard let profile = gamificationManager.userProfile else { return }
+        await socialSyncManager.disableSharing(for: profile)
+        withAnimation { inlineMessage = "Sharing disabled" }
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            withAnimation { inlineMessage = nil }
         }
     }
 }

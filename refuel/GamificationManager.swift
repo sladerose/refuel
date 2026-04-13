@@ -52,7 +52,7 @@ final class GamificationManager {
     }
 
     @MainActor
-    private func totalContributionCount() -> Int {
+    func totalContributionCount() -> Int {
         let descriptor = FetchDescriptor<LuckyDrawEntry>()
         return (try? modelContext.fetchCount(descriptor)) ?? 0
     }
