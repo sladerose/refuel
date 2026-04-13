@@ -157,23 +157,24 @@ struct StationRow: View {
         return String(format: "%.1f km", distance / 1000)
     }
 
-    var valueSummary: (text: String, color: Color)? {
+    var ragColor: Color? {
         guard let localAverage,
               let minPrice = (station.prices ?? []).map(\.price).min() else { return nil }
         let diff = minPrice - localAverage
-        if abs(diff) < 0.005 {
-            return ("Avg", .secondary)
-        } else if diff < 0 {
-            return (String(format: "-R%.2f", abs(diff)), station.ragStatus.color)
-        } else {
-            return (String(format: "+R%.2f", diff), station.ragStatus.color)
-        }
+        if abs(diff) < 0.005 { return nil }
+        return station.ragStatus.color
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Station name + distance
+            // Station name + RAG dot + distance
             HStack(alignment: .firstTextBaseline) {
+                if let color = ragColor {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 8, height: 8)
+                        .offset(y: -1)
+                }
                 Text(station.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -205,17 +206,6 @@ struct StationRow: View {
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-            }
-
-            // RAG badge
-            if let summary = valueSummary {
-                Text(summary.text)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(summary.color)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(summary.color.opacity(0.12))
-                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 6)
