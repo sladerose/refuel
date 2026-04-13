@@ -16,15 +16,21 @@ class ContentViewModel {
     var searchService = SearchService()
     var geofenceService = GeofenceService()
     var gamificationManager: GamificationManager
+    var socialSyncManager: SocialSyncManager
     var notificationManager = NotificationManager()
     var proactiveService: ProactiveService
-    
+
     var isRefreshing = false
-    
+
     init(modelContainer: ModelContainer) {
         let gManager = GamificationManager(modelContainer: modelContainer)
         self.gamificationManager = gManager
-        
+
+        let sManager = SocialSyncManager()
+        self.socialSyncManager = sManager
+        // Inject into GamificationManager so debounced sync can fire from awardXP (D-05)
+        gManager.socialSyncManager = sManager
+
         let gService = GeofenceService()
         self.geofenceService = gService
         

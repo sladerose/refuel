@@ -67,6 +67,7 @@ struct ContentView: View {
                     }
                 }
                 .environment(viewModel.gamificationManager)
+                .environment(viewModel.socialSyncManager)
                 .environment(viewModel.proactiveService)
                 .onAppear {
                     viewModel.notificationManager.requestPermissions()
