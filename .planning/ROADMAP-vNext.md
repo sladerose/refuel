@@ -5,14 +5,14 @@ Following the successful completion of the v1 and v2 phases (Core Map, Value Ana
 
 ## Phases
 
-- [ ] **Phase 11: The Cloud Foundation**
+- [x] **Phase 11: The Cloud Foundation** *(completed 2026-04-13)*
   - **Goal:** Resolve Xcode entitlement blockers and fully activate CloudKit.
   - **Plans:** 1 plans
-    - [ ] 11-01-PLAN.md — Resolve Xcode entitlement blockers and fully activate CloudKit for SwiftData syncing.
+    - [x] 11-01-PLAN.md — Resolve Xcode entitlement blockers and fully activate CloudKit for SwiftData syncing.
   - **Tasks:**
-    - Document exact manual Xcode setup steps for developers (iCloud, Background Modes).
-    - Restore the `cloudKitDatabase` configuration in `refuelApp.swift`.
-    - Validate end-to-end sync of personal data (Favorites, Refuel History) across multiple devices using the `iCloud.com.refuel.app` private database.
+    - [x] Document exact manual Xcode setup steps for developers (iCloud, Background Modes).
+    - [x] Restore the `cloudKitDatabase` configuration in `refuelApp.swift`.
+    - [x] Validate end-to-end sync of personal data (Favorites, Refuel History) across multiple devices using the `iCloud.com.refuel.app` private database.
 
 - [ ] **Phase 12: Global Community Sync**
   - **Goal:** Enable users to share their contributions with the broader community.
