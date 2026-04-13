@@ -149,79 +149,77 @@ struct StationRow: View {
     let station: Station
     let localAverage: Double?
     @Environment(LocationManager.self) var locationManager
-    
+
     var distanceString: String {
         guard let userLocation = locationManager.userLocation else { return "Calculating..." }
         let stationLocation = CLLocation(latitude: station.latitude, longitude: station.longitude)
         let distance = userLocation.distance(from: stationLocation)
         return String(format: "%.1f km", distance / 1000)
     }
-    
-    var valueSummary: String? {
-        guard let localAverage = localAverage,
+
+    var valueSummary: (text: String, color: Color)? {
+        guard let localAverage,
               let minPrice = (station.prices ?? []).map(\.price).min() else { return nil }
-        
         let diff = minPrice - localAverage
         if abs(diff) < 0.005 {
-            return "Avg price"
+            return ("Avg", .secondary)
         } else if diff < 0 {
-            return String(format: "-R%.2f vs avg", abs(diff))
+            return (String(format: "-R%.2f", abs(diff)), station.ragStatus.color)
         } else {
-            return String(format: "+R%.2f vs avg", diff)
+            return (String(format: "+R%.2f", diff), station.ragStatus.color)
         }
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(station.name)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    
-                    Text(station.address)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
+        VStack(alignment: .leading, spacing: 10) {
+            // Station name + distance
+            HStack(alignment: .firstTextBaseline) {
+                Text(station.name)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                 Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(distanceString)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                    
-                    if let summary = valueSummary {
-                        Text(summary)
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(station.ragStatus.color.opacity(0.15))
-                            .foregroundStyle(station.ragStatus.color)
-                            .clipShape(Capsule())
-                    }
-                }
+                Text(distanceString)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
             }
-            
-            HStack(spacing: 8) {
+
+            // Address
+            Text(station.address)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            // Fuel grade chips + RAG badge
+            HStack(alignment: .center, spacing: 6) {
                 ForEach((station.prices ?? []).sorted(by: { $0.grade < $1.grade })) { price in
-                    HStack(spacing: 2) {
+                    VStack(spacing: 2) {
                         Text(price.grade)
-                            .font(.caption2.weight(.black))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
                         Text(String(format: "R%.2f", price.price))
-                            .font(.caption2.weight(.semibold).monospaced())
+                            .font(.subheadline.weight(.bold).monospaced())
+                            .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                Spacer()
+
+                if let summary = valueSummary {
+                    Text(summary.text)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(summary.color)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(summary.color.opacity(0.12))
+                        .clipShape(Capsule())
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }
 
