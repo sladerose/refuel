@@ -13,6 +13,11 @@
 - [x] **Phase 9: Rewards Hub & Social Proof** - Lucky Draw system, sharing stats, and community impact visualization. (completed 2026-04-12)
 - [x] **Milestone: Architecture & UI Refactor** - MVVM deconstruction, Liquid Glass UI standardization, and OCR 2.0. (completed 2026-04-12)
 
+- [x] **Phase 11: The Cloud Foundation** - Resolve Xcode entitlement blockers and fully activate CloudKit for SwiftData syncing. (completed 2026-04-13)
+- [ ] **Phase 12: Global Community Sync** - Enable users to share contributions with the broader community via public CloudKit database and leaderboard.
+- [ ] **Phase 13: Live Data Ingestion & Alerts** - Connect to live external data and push critical fuel hike alerts to users.
+- [ ] **Phase 14: Station Verification Crowdsourcing** - Use community input to maintain accurate station metadata via consensus voting.
+
 ## Progress Table
 
 | Milestone | Tasks | Status | Date |
