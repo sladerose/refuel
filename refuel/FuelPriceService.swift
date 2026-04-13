@@ -30,7 +30,7 @@ class MockFuelPriceService: FuelPriceService {
         return [
             StationDTO(
                 id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
-                name: "bp",
+                name: "BP",
                 address: "26 Seadoone Road, Amanzimtoti",
                 latitude: -30.066488,
                 longitude: 30.869853,
