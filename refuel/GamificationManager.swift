@@ -6,6 +6,7 @@ import Observation
 final class GamificationManager {
     private var modelContext: ModelContext
     private(set) var userProfile: UserProfile?
+    var socialSyncManager: SocialSyncManager?
     
     init(modelContainer: ModelContainer) {
         self.modelContext = ModelContext(modelContainer)
@@ -42,8 +43,20 @@ final class GamificationManager {
         }
         
         try? modelContext.save()
+
+        // D-05: Trigger debounced community sync on significant XP events
+        if let sm = socialSyncManager, sm.isCommunityShareEnabled, let profile = userProfile {
+            let contributions = totalContributionCount()
+            sm.triggerDebouncedSync(profile: profile, contributionCount: contributions)
+        }
     }
-    
+
+    @MainActor
+    private func totalContributionCount() -> Int {
+        let descriptor = FetchDescriptor<LuckyDrawEntry>()
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
+
     @MainActor
     private func createLuckyDrawEntry(type: String, stationName: String) {
         let entry = LuckyDrawEntry(stationName: stationName, contributionType: type)
