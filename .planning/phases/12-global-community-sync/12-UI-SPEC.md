@@ -46,7 +46,7 @@ SwiftUI uses point-based layout. All spacing follows the 8-point iOS grid, with 
 
 Exceptions:
 - Touch targets for opt-in toggle and leaderboard action rows: minimum 44pt height (Apple HIG minimum tappable area).
-- "You" highlight row: add 2pt vertical padding above and below to visually separate from adjacent rows without extra spacing tokens.
+- "You" highlight row: no extra vertical padding. Visual distinction is provided solely by the `.orange.opacity(0.12)` background overlay — no non-standard spacing values.
 
 ---
 
@@ -56,14 +56,12 @@ All sizes expressed as Apple system text styles (Dynamic Type compliant). No fix
 
 | Role | System Style | Weight | Line Height |
 |------|-------------|--------|-------------|
-| Leaderboard section title ("Global Leaderboard") | `.title2` | Bold (`.bold()`) | System default (approx 1.2) |
+| Leaderboard section title ("Global Leaderboard") | `.title2` | Semibold (`.semibold()`) | System default (approx 1.2) |
 | Rank position + alias (leaderboard row primary) | `.headline` | Semibold (`.semibold()`) | System default (approx 1.35) |
 | XP value in leaderboard row | `.headline` + `.monospaced` | Regular | System default |
-| Rank label (e.g. "Expert Scout") | `.subheadline` | Regular | System default (approx 1.4) |
-| Section header labels | `.subheadline` | Semibold (`.semibold()`) | System default |
 | Supporting body text (privacy description, opt-in explanation) | `.body` | Regular | System default (approx 1.5) |
 | "You" pill / position badge | `.caption` | Semibold (`.semibold()`) | System default (approx 1.2) |
-| Metadata / secondary (e.g. contribution count) | `.caption` | Regular | System default |
+| Rank label (e.g. "Expert Scout"), section header labels, metadata / secondary (e.g. contribution count) | `.caption` | Semibold (`.semibold()`) for section headers and rank labels; Regular for metadata | System default |
 
 Design variants in use:
 - `.monospaced` on XP values to prevent layout shift as numbers change.
@@ -108,6 +106,8 @@ All new views must be implemented as SwiftUI views following the naming conventi
 ### Material Use
 
 All card-style containers use `.ultraThinMaterial` background — consistent with `StreakIndicator` (`GamificationViews.swift`) and the existing profile card pattern. The "You" row additionally applies an `.orange.opacity(0.12)` overlay on top of the material to distinguish it from all other rows.
+
+**Primary focal point:** The "You" highlighted row (orange tint + pill badge) draws the user's eye to their own position on first load.
 
 ---
 
