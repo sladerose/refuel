@@ -130,6 +130,9 @@ struct PriceBoardScannerContainer: View {
                                     .foregroundColor(.black)
                             }
                         }
+                        .sensoryFeedback(.impact, trigger: triggerCapture) { oldValue, newValue in
+                            newValue == true
+                        }
                         .padding(.bottom, 40)
                     }
                 }

@@ -122,11 +122,23 @@ struct StationListView: View {
             }
             .overlay {
                 if stations.isEmpty {
-                    ContentUnavailableView(
-                        filterFavorites ? "No Favorites" : "No Stations Found",
-                        systemImage: filterFavorites ? "heart.slash" : "fuelpump.slash",
-                        description: Text(filterFavorites ? "Stations you heart will appear here." : "Try searching in a different area.")
-                    )
+                    ContentUnavailableView {
+                        Label(filterFavorites ? "No Favorites" : "No Stations Found", 
+                              systemImage: filterFavorites ? "heart.slash" : "fuelpump.slash")
+                    } description: {
+                        Text(filterFavorites ? "Stations you heart will appear here." : "Try searching in a different area.")
+                    } actions: {
+                        if filterFavorites {
+                            NavigationLink {
+                                StationListView(filterFavorites: false, onRefresh: onRefresh)
+                            } label: {
+                                Text("Explore Nearby")
+                                    .fontWeight(.bold)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        }
+                    }
                 }
             }
         }

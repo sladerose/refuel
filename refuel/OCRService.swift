@@ -67,6 +67,10 @@ class OCRService {
         let lines = groupObservationsByLine(observations)
         let allLines = lines.map { $0.joined(separator: " ") }
         
+        return parseText(allLines, stations: stations)
+    }
+    
+    internal func parseText(_ allLines: [String], stations: [Station]) -> ScannedReceiptData {
         var data = ScannedReceiptData()
         let allText = allLines.joined(separator: "\n").lowercased()
         
