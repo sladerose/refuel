@@ -189,34 +189,33 @@ struct StationRow: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            // Fuel grade chips + RAG badge
+            // Fuel grade chips
             HStack(alignment: .center, spacing: 6) {
                 ForEach((station.prices ?? []).sorted(by: { $0.grade < $1.grade })) { price in
-                    VStack(spacing: 2) {
+                    HStack(spacing: 4) {
                         Text(price.grade)
-                            .font(.caption.weight(.semibold))
+                            .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)
                         Text(String(format: "R%.2f", price.price))
-                            .font(.subheadline.weight(.bold).monospaced())
+                            .font(.caption.weight(.bold).monospaced())
                             .foregroundStyle(.primary)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 6)
                     .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+            }
 
-                Spacer()
-
-                if let summary = valueSummary {
-                    Text(summary.text)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(summary.color)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(summary.color.opacity(0.12))
-                        .clipShape(Capsule())
-                }
+            // RAG badge
+            if let summary = valueSummary {
+                Text(summary.text)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(summary.color)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(summary.color.opacity(0.12))
+                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 6)
